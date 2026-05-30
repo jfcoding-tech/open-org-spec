@@ -1,0 +1,48 @@
+# Adoption manifest — sample
+#
+# Copy this to `.open-org-spec/config.yaml` at your repository root and edit it.
+# This file is the contract between the standard and your repo: it declares which
+# capabilities you have activated, at what version, and with what local extensions.
+# An agent reads it first to know which rules apply. See
+# `open-org-spec/specs/adoption-manifest/spec.md` for the full schema.
+
+standard_version: "0.1.0"          # the open-org-spec version you are pinning to
+
+owner:                              # the person accountable for this manifest —
+  name: <full name>                # the only one who may change capability
+  role: <organisational role>      # statuses without explicit consent
+
+capabilities:
+
+  # --- An active, unextended capability -------------------------------------
+  governance-at-scope:
+    status: active                 # active | proposed | inactive
+    activated: <YYYY-MM-DD>        # required when status is active
+
+  # --- An active capability with an adopter extension -----------------------
+  project:
+    status: active
+    activated: <YYYY-MM-DD>
+    extension: extensions/project/spec.md   # path relative to .open-org-spec/
+    note: closing-audit table added on top of the base schema
+
+  # --- An active capability that contains sub-tools, with a tool extension --
+  tooling:
+    status: active
+    activated: <YYYY-MM-DD>
+    extension: extensions/tooling/spec.md         # tooling-wide concerns
+    tool_extensions:                              # per-tool overlays
+      catchup: extensions/tooling/catchup/spec.md
+
+  # --- A capability you are still evaluating --------------------------------
+  people:
+    status: proposed               # agents may suggest activation; they do not enforce
+    note: evaluating after the first roster lands
+
+  # --- A capability you have deliberately declined --------------------------
+  feedback-inbox:
+    status: inactive               # agents will not suggest this again
+    note: single maintainer for now; revisit when contributors > 3
+
+# Capabilities not listed here are treated as `proposed` by default — present in
+# the standard but undeclared by this adopter.
