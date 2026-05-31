@@ -34,7 +34,7 @@ Two kinds of repositories use this standard:
 The standard is inert until an organisation's repository adopts it. Five steps take you from an empty repo to a working, LLM-enforced adoption:
 
 1. **Bring the standard into your repo.** Add `open-org-spec/` as a git submodule, subtree, or vendored copy at your repository root. Pin to a version (see [Status](#status)).
-2. **Drop in the agent instructions.** Copy [`templates/CLAUDE.md`](./templates/CLAUDE.md) to your repo root as `CLAUDE.md` (or your LLM interface's equivalent) and fill in the `<placeholders>` — your org description, manifest owner, and routing map. This is the file that makes the standard *operate*: the agent reads it every session and enforces the active capabilities.
+2. **Drop in the agent instructions — at your interface's path.** Copy [`templates/CLAUDE.md`](./templates/CLAUDE.md) to the file your LLM interface actually reads: `CLAUDE.md` for Claude Code, `.github/copilot-instructions.md` for GitHub Copilot, `.cursor/rules/` for Cursor (see the [interface table](./specs/adoption-manifest/adopt.md#interface-conventions)). Fill in the `<placeholders>`. This is the file that makes the standard *operate*: the agent reads it every session and enforces the active capabilities. (The autonomous bootstrap in step 4 does this for you, at the right path for your interface.)
 3. **Scaffold the manifest.** Create `.open-org-spec/config.yaml` declaring which capabilities you're activating, at what `standard_version`, and who owns the manifest. See the [adoption-manifest spec](./specs/adoption-manifest/spec.md) for the schema.
 4. **Activate your first capability.** Set a capability's `status: active` in the manifest and run `adhere-to <capability>`. It scans your repo, lists conformance gaps, and routes each to its owner. Activation is complete when gaps are conformed or recorded as known follow-ups.
 5. **Wire your first tool.** Activation scaffolds thin command relays in your LLM interface's command directory and lists them in that directory's README, so contributors discover them in one place.
@@ -43,7 +43,10 @@ Capabilities are **opt-in and incremental** — activate one when a real use cas
 
 ## Status
 
-Early and deliberately incomplete. Version: **0.1.0**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+Early and deliberately incomplete. Version: **0.1.1**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+
+- **0.1.1** — interface-aware bootstrap: `oos:adopt-manifest` now elicits the adopter's LLM interface and writes the agent-instructions file and command artefacts at that interface's paths (Claude Code, GitHub Copilot, Cursor), and verifies each capability's scaffolding instead of assuming Claude Code conventions.
+- **0.1.0** — initial public release.
 
 ## Feedback
 

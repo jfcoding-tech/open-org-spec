@@ -4,9 +4,9 @@ Entry point for LLM agents working with this repository. (Human-readable too —
 
 ## If you've been asked to set this standard up in an organisation's repo
 
-Read and execute [`specs/adoption-manifest/adopt.md`](./specs/adoption-manifest/adopt.md) — invoked as `oos:adopt-manifest`. It is the **autonomous bootstrap**: in one run it scaffolds the adoption manifest (`.open-org-spec/config.yaml`), generates the repo's contributor guide from [`templates/CLAUDE.md`](./templates/CLAUDE.md) with the owner filled in, and activates the capabilities the adopter chooses (running `adhere-to` for each to wire command relays and surface gaps).
+Read and execute [`specs/adoption-manifest/adopt.md`](./specs/adoption-manifest/adopt.md) — invoked as `oos:adopt-manifest`. It is the **autonomous bootstrap**: in one run it determines the adopter's LLM interface, scaffolds the adoption manifest (`.open-org-spec/config.yaml`), generates the repo's contributor guide from [`templates/CLAUDE.md`](./templates/CLAUDE.md) **at the interface's agent-instructions path**, and activates the capabilities the adopter chooses (scaffolding their content and, where the interface supports them, command artefacts).
 
-It elicits only what it cannot infer — the manifest owner (a named person), a one-line description of the organisation, and which capabilities to activate first — then proceeds with no manual file editing. Do not hand-scaffold the manifest or guide yourself; run the command, which does it consistently.
+It elicits only what it cannot infer — the **LLM interface** (Claude Code, GitHub Copilot, Cursor, …), the manifest owner (a named person), a one-line description of the organisation, and which capabilities to activate first — then proceeds with no manual file editing. **Resolve the interface first**: the guide and command files must go where that interface actually reads them (e.g. `.github/copilot-instructions.md` for Copilot, not `CLAUDE.md`) — see the interface table in [`specs/adoption-manifest/adopt.md`](./specs/adoption-manifest/adopt.md#interface-conventions). Do not hand-scaffold the manifest or guide yourself; run the command, which does it consistently and verifies each capability's scaffolding landed.
 
 ## If you're working in a repo that has already adopted this standard
 

@@ -10,7 +10,7 @@ is named only as a worked example of how the placeholders map.
 
 | Template | Copy to | Purpose |
 |----------|---------|---------|
-| [`CLAUDE.md`](./CLAUDE.md) | your repo root (as `CLAUDE.md` or your interface's agent-instruction file) | makes the standard *operate* — the agent reads the manifest and enforces active capabilities |
+| [`CLAUDE.md`](./CLAUDE.md) | your interface's agent-instructions path — `CLAUDE.md` (Claude Code), `.github/copilot-instructions.md` (GitHub Copilot), `.cursor/rules/` (Cursor) | makes the standard *operate* — the agent reads the manifest and enforces active capabilities |
 | [`config.yaml`](./config.yaml) | `.open-org-spec/config.yaml` | the adoption manifest — which capabilities are active, at what version, with what extensions |
 | [`command-relay.md`](./command-relay.md) | your interface's command directory | a thin relay that points an invocation at its canonical spec |
 | [`governance.md`](./governance.md) | a scope's `governance/README.md` | governance folder scaffold (used by `governance-at-scope`) |
@@ -24,10 +24,12 @@ in whatever location their LLM interface resolves invocations from — its "comm
 directory". The relay does one thing: tell the agent to read the canonical spec and
 execute it. Use [`command-relay.md`](./command-relay.md) as the starter.
 
-1. **Pick the command directory your interface reads.** For Claude Code this is
-   `.claude/commands/`; for another interface it is wherever that interface looks up
-   invocations. The standard does not care which — only that the relay is co-located
-   with the tooling configuration the interface reads.
+1. **Pick the command location your interface reads.** Claude Code → `.claude/commands/<name>.md`
+   relay files; GitHub Copilot → `.github/prompts/<name>.prompt.md` prompt files (invoked as
+   `/<name>`); other interfaces → wherever that interface resolves invocations. Some interfaces
+   (e.g. Cursor) have **no command mechanism** — there, a command is invoked by pointing the
+   agent at its canonical spec, and the commands README records that instead of a relay path.
+   See the interface table in [`../specs/adoption-manifest/adopt.md`](../specs/adoption-manifest/adopt.md#interface-conventions).
 2. **Drop in one relay per command** a capability declares (e.g. `adopt`, `new`,
    `extend`, `catchup`, `adhere-to`). Fill the placeholders from the canonical spec.
 3. **List every relay in the command directory's `README.md`** — the ownership index.

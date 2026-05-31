@@ -1,8 +1,11 @@
 # CLAUDE.md — starter template for open-org-spec adopters
 
-> **How to use this template.** Copy this file to the root of your organisation's
-> repository as `CLAUDE.md` (or your LLM interface's equivalent agent-instruction
-> file). Replace every `<placeholder>` and delete the guidance block at the bottom
+> **How to use this template.** Copy this file to **your LLM interface's
+> agent-instructions path** — `CLAUDE.md` at the repo root for Claude Code,
+> `.github/copilot-instructions.md` for GitHub Copilot, `.cursor/rules/` for Cursor (see
+> the interface table in [`../specs/adoption-manifest/adopt.md`](../specs/adoption-manifest/adopt.md#interface-conventions)).
+> The content below is interface-neutral; only the filename changes. Replace every
+> `<placeholder>` and delete the guidance block at the bottom
 > once you have tailored it. This file is what makes the standard *operate*: an
 > agent reads it on every interaction and applies the rules below. Without it, the
 > specs under `open-org-spec/` are reference text the agent has no instruction to enforce.
