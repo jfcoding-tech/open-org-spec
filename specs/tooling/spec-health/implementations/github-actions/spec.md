@@ -9,14 +9,37 @@ The GitHub Actions runtime implementation for the spec-health suite. Satisfies t
 
 ### Scheduling contract — `on: schedule`
 
-Each agent is wired as a separate GitHub Actions workflow file under `.github/workflows/`. Each workflow uses `on: schedule` with a cron expression matching the adopter-declared schedule.
+Two deployment patterns are supported. Choose based on whether the agents can run independently.
 
-Per-agent workflow files:
+**Pattern A — Separate workflows (default)**
+
+Each agent has its own workflow file and cron schedule. Suitable when the timing gap between runs is sufficient for the first agent to commit before the second starts (typically 30+ minutes for conformance → catalogue).
 
 | Agent | Workflow file | Cron expression |
 |---|---|---|
 | conformance | `.github/workflows/spec-health-conformance.yml` | adopter-declared conformance schedule |
 | catalogue | `.github/workflows/spec-health-catalogue.yml` | adopter-declared catalogue schedule |
+
+**Pattern B — Sequential steps in one workflow (recommended for conformance → catalogue)**
+
+Both agents run as sequential steps in a single workflow file. The catalogue step starts only after the conformance step has committed its outputs — guaranteeing the dependency without relying on timing. This is the preferred pattern when the two schedules are within the same hour, because it eliminates any risk of catalogue starting while conformance is still committing.
+
+```yaml
+# .github/workflows/spec-health.yml
+on:
+  schedule:
+    - cron: '<adopter-declared schedule>'
+steps:
+  - name: Run /conformance
+    run: |
+      # ... run conformance, commit, push
+  - name: Run /catalogue
+    run: |
+      git pull --ff-only || true   # pick up conformance's commit
+      # ... run catalogue, commit, push
+```
+
+Each step sets its own `git config user.name` (`spec-health/conformance` and `spec-health/catalogue` respectively) before running, so commits remain attributable per agent.
 
 The `decision-escalation` and `agent-metrics` agents are no longer part of this suite (they moved to `governance-at-scope` tooling and the tooling capability respectively). Adopters who run them via GitHub Actions wire their workflows from those capabilities' own implementations, not here.
 
@@ -162,11 +185,11 @@ capabilities:
     implementation: github-actions
 ```
 
-After adding this entry, add the two workflow files under `.github/workflows/` following the per-agent table above. These two files are declared as artefacts below; `/spec-health-activate` (or `adhere-to`) scaffolds them from the templates under `workflows/`.
+After adding this entry, add the workflow file(s) under `.github/workflows/` following the chosen pattern. For Pattern B (sequential), declare `deployment_pattern: sequential` in the spec-health manifest entry so `/spec-health-activate` and `adhere-to` scaffold the combined workflow instead of two separate ones.
 
 ## Artefacts
 
-The two scheduled-agent workflow files this implementation requires in a conformant adopter repo. Each is a distinct static `file` artefact templated from `workflows/`. Both carry the same `condition` — they scaffold only when the adopter has chosen the `github-actions` implementation. The cron schedule for each is read from `config.yaml#capabilities.spec-health.agents.<name>.schedule`; the gateway, model, and runner come from adopter wiring; `manifest_dir` resolves via the standard variable.
+Workflow artefacts for the `github-actions` implementation. Pattern A (separate workflows) scaffolds two files; Pattern B (sequential) scaffolds one. Both patterns carry the same `condition` — they scaffold only when `implementation: github-actions` is declared. The cron schedule, gateway, model, runner, and manifest_dir are substituted from adopter wiring.
 
 ```yaml
 artefacts:
