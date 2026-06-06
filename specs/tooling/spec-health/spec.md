@@ -279,6 +279,7 @@ YYYY-MM-DD HH:MM UTC | /<command-name> | files_read: N | catalogue_assisted: tru
 
 ## Related
 
+- [`activate.md`](activate.md) — the `/spec-health-activate` command that wires the suite from `config.yaml`
 - [`conformance/spec.md`](conformance/spec.md) — conformance agent capability spec
 - [`catalogue/spec.md`](catalogue/spec.md) — catalogue agent capability spec
 - [`decision-nudge/spec.md`](decision-nudge/spec.md) — decision-nudge agent capability spec

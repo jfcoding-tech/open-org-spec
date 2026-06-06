@@ -23,9 +23,20 @@ Two kinds of repositories use this standard:
 
 ## Contents
 
-- [`specs/`](./specs/) — the capabilities that make up the standard. Each capability is a folder with its own `spec.md`.
+- [`specs/`](./specs/) — the capabilities that make up the standard. Each capability is a folder with its own `spec.md`. Current capabilities:
+  - `governance-at-scope` — governance folders, DACI, decisions at any scope
+  - `project` — time-boxed initiatives with lifecycle gates
+  - `people` — role rosters and authority declarations at any scope
+  - `feedback-inbox` — structured feedback and nudge routing
+  - `function` — cross-cutting business functions (Revenue, Marketing, Finance, etc.)
+  - `adoption-manifest` — manifest schema, capability activation, extensions
+  - `capability-lifecycle` — proposing and applying changes to the standard
+  - `tooling` — commands, agents, hooks; includes `agent`, `catchup`, `spec-health`, `adhere-to`
+  - `observability` — org-health metrics and contributor activity dashboards
+  - `adherence-check` — conformance reports against any active capability
 - [`templates/`](./templates/) — copy-paste starters for artefacts defined by the capabilities in [`specs/`](./specs/).
 - [`GUIDE.md`](./GUIDE.md) — how to use the standard in an organisation.
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — how to contribute to the standard itself (commit conventions, versioning, promotion checklist).
 - [`feedback/`](./feedback/) — feedback from adopters.
 - [`backlog.md`](./backlog.md) — deferred work against the standard itself.
 
@@ -43,8 +54,13 @@ Capabilities are **opt-in and incremental** — activate one when a real use cas
 
 ## Status
 
-Early and deliberately incomplete. Version: **0.1.1**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+Early and deliberately incomplete. Version: **0.1.6**. The standard grows from real use cases; breaking changes are expected until it stabilises.
 
+- **0.1.6** — artefact scaffolding schema: `adhere-to` Step 4 generalised to read `## Artefacts` YAML blocks from capability specs and scaffold physical artefacts (files, gitignore entries, directories) with variable substitution and platform variants. Pre-push hook templates added. `adoption-manifest` owner schema gains optional `email` field. `adhere-to` and `adherence-check` gain tooling drift check (`#### Against tooling`).
+- **0.1.5** — self-contained commands: `tooling/spec.md` defines when commands must be self-contained (`canonical_spec` + `canonical_spec_version` frontmatter fields); `CONTRIBUTING.md` added for standard developers; `review-optimisations` command promoted to standard.
+- **0.1.4** — spec-health suite: `conformance`, `catalogue`, `decision-nudge`, `observability` agents and dashboard promoted to `specs/tooling/spec-health/`. `adherence-check` gains `#### Against tooling` drift check.
+- **0.1.3** — agent capability: four-contract pattern (specification, security, implementation, observability) for automated agents running with `--dangerously-skip-permissions` promoted to `specs/tooling/agent/`.
+- **0.1.2** — function capability: structural type for cross-cutting business functions (Revenue, Marketing, Finance, etc.) promoted to `specs/function/`.
 - **0.1.1** — interface-aware bootstrap: `oos:adopt-manifest` now elicits the adopter's LLM interface and writes the agent-instructions file and command artefacts at that interface's paths (Claude Code, GitHub Copilot, Cursor), and verifies each capability's scaffolding instead of assuming Claude Code conventions.
 - **0.1.0** — initial public release.
 

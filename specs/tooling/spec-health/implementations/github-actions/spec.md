@@ -162,7 +162,102 @@ capabilities:
     implementation: github-actions
 ```
 
-After adding this entry, add the four workflow files under `.github/workflows/` following the per-agent table above.
+After adding this entry, add the four workflow files under `.github/workflows/` following the per-agent table above. These four files are declared as artefacts below; `/spec-health-activate` (or `adhere-to`) scaffolds them from the templates under `workflows/`.
+
+## Artefacts
+
+The four scheduled-agent workflow files this implementation requires in a conformant adopter repo. Each is a distinct static `file` artefact templated from `workflows/`. All four carry the same `condition` — they scaffold only when the adopter has chosen the `github-actions` implementation. The cron schedule for each is read from `config.yaml#capabilities.spec-health.agents.<name>.schedule`; the gateway, model, and runner come from adopter wiring; `manifest_dir` resolves via the standard variable.
+
+```yaml
+artefacts:
+  - id: workflow-conformance
+    type: file
+    path: ".github/workflows/spec-health-conformance.yml"
+    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-conformance.yml
+    variables:
+      - name: cron_schedule
+        source: config.yaml#capabilities.spec-health.agents.conformance.schedule
+      - name: llm_gateway
+        source: config.yaml#capabilities.spec-health.llm_gateway
+      - name: model
+        source: config.yaml#capabilities.spec-health.model
+      - name: runner
+        source: config.yaml#capabilities.spec-health.runner
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_exists
+    condition:
+      type: config_equals
+      config_path: capabilities.spec-health.implementation
+      equals: github-actions
+
+  - id: workflow-catalogue
+    type: file
+    path: ".github/workflows/spec-health-catalogue.yml"
+    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-catalogue.yml
+    variables:
+      - name: cron_schedule
+        source: config.yaml#capabilities.spec-health.agents.catalogue.schedule
+      - name: llm_gateway
+        source: config.yaml#capabilities.spec-health.llm_gateway
+      - name: model
+        source: config.yaml#capabilities.spec-health.model
+      - name: runner
+        source: config.yaml#capabilities.spec-health.runner
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_exists
+    condition:
+      type: config_equals
+      config_path: capabilities.spec-health.implementation
+      equals: github-actions
+
+  - id: workflow-decision-nudge
+    type: file
+    path: ".github/workflows/spec-health-decision-nudge.yml"
+    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-decision-nudge.yml
+    variables:
+      - name: cron_schedule
+        source: config.yaml#capabilities.spec-health.agents.decision-nudge.schedule
+      - name: llm_gateway
+        source: config.yaml#capabilities.spec-health.llm_gateway
+      - name: model
+        source: config.yaml#capabilities.spec-health.model
+      - name: runner
+        source: config.yaml#capabilities.spec-health.runner
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_exists
+    condition:
+      type: config_equals
+      config_path: capabilities.spec-health.implementation
+      equals: github-actions
+
+  - id: workflow-observability
+    type: file
+    path: ".github/workflows/spec-health-observability.yml"
+    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-observability.yml
+    variables:
+      - name: cron_schedule
+        source: config.yaml#capabilities.spec-health.agents.observability.schedule
+      - name: llm_gateway
+        source: config.yaml#capabilities.spec-health.llm_gateway
+      - name: model
+        source: config.yaml#capabilities.spec-health.model
+      - name: runner
+        source: config.yaml#capabilities.spec-health.runner
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_exists
+    condition:
+      type: config_equals
+      config_path: capabilities.spec-health.implementation
+      equals: github-actions
+```
 
 ## Notes
 

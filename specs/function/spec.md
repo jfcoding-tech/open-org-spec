@@ -1,7 +1,11 @@
 # Function
 
-**Owner:** Javier Fernandez
-**Status:** Active
+---
+owner:
+  name: Javier Fernandez
+  role: Repo-wide governance approver
+status: active
+---
 
 A structural type for cross-cutting business capabilities that operate across clusters — not a line of business, not shared services, not infrastructure.
 
@@ -47,7 +51,7 @@ Every function folder must satisfy:
 
 1. **Named owner** — an individual accountable for the spec's accuracy. Named in the spec frontmatter and in the folder's `README.md`.
 2. **`governance-at-scope` active** — the function owner declares a DACI, names the scope owner, and ensures decisions at this scope follow the governance-at-scope pattern defined in [`../governance-at-scope/spec.md`](../governance-at-scope/spec.md).
-3. **Status** — every spec carries `status: Active | Draft | Deprecated`.
+3. **Status** — every spec carries `status: active | draft | deprecated`. This is the atemporal vocabulary defined in [`../adoption-manifest/spec.md#status-vocabularies`](../adoption-manifest/spec.md#status-vocabularies).
 
 The function owner is responsible for:
 - Keeping the mandate and boundary descriptions current.
@@ -94,3 +98,4 @@ Additional files or sub-specs may be added by the function owner as the scope gr
 ## Related
 
 - [`../governance-at-scope/spec.md`](../governance-at-scope/spec.md) — governance-at-scope capability, required for every function.
+- [`../adoption-manifest/spec.md#status-vocabularies`](../adoption-manifest/spec.md#status-vocabularies) — canonical definition of the atemporal status vocabulary (`active | draft | deprecated`) used by this spec.

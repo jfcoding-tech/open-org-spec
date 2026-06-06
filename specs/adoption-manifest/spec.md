@@ -39,7 +39,7 @@ capabilities:
 ```
 
 - `standard_version` — the version of open-org-spec the adopter is pinning to. Capabilities are read against this version; if the standard moves on, the adopter chooses when to upgrade.
-- `owner` — the person accountable for the manifest. The only person authorised to change capability statuses (activate, deactivate, extend) without explicit consent. Schema matches `governance-at-scope`'s owner. Required. The `email` sub-field is optional but required when capabilities declare artefacts that need owner identity at install time (e.g., the tooling capability's pre-push hook).
+- `owner` — the person accountable for the manifest. The only person authorised to change capability statuses (activate, deactivate, extend) without explicit consent. Schema matches `governance-at-scope`'s owner. Required. The `email` sub-field is optional but required when capabilities declare artefacts that need owner identity at install time (e.g., the tooling capability's pre-push hook). A capability spec signals this requirement by declaring `requires_owner_email: true` in its capability-level metadata — when any `active` capability carries this flag, `owner.email` is required and its absence is a conformance gap.
 - `<capability-slug>` — matches the folder name under `open-org-spec/specs/`. Examples: `people`, `governance-at-scope`, `project`, `tooling`, `feedback-inbox`.
 - `status` — see "Capability statuses" below.
 - `activated` — the date the capability transitioned to `active`. Required for traceability when reviewing adoption history.
@@ -76,6 +76,13 @@ The three layers reinforce each other. Adopters may implement any subset beyond 
 **`inactive`** — the adopter has explicitly decided not to adopt this capability. Agents do not suggest it again unless the adopter removes the entry. Useful for declining a capability with a stated reason (in `note`) so the decision survives turnover.
 
 Capabilities not listed in the manifest are treated as `proposed` by default — present in the standard but undeclared by the adopter.
+
+### Status vocabularies
+
+Two distinct status vocabularies are in use across open-org-spec artefacts:
+
+- **Lifecycle vocabulary** (`started | proposed | in-progress | closed | cancelled`) — for time-boxed artefacts such as `project`. These statuses track progress through a defined lifecycle with an expected close date.
+- **Atemporal vocabulary** (`active | draft | deprecated`) — for permanent structural artefacts such as `function`, and any future folder-type capabilities that describe ongoing organisational structures rather than time-boxed work. These specs are updated when reality changes and are never "finished".
 
 ### Extension mechanism
 

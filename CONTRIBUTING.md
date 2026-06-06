@@ -74,7 +74,7 @@ git push origin main v<version>
 
 When promoting a capability from an adoption's `.open-org-spec/extensions/` into this standard:
 
-1. Extract the generic core — remove all adopter-specific content (names, paths, org structure). The adopter's wiring stays in their `extensions/<capability>/busuu/spec.md`.
+1. Extract the generic core — remove all adopter-specific content (names, paths, org structure). The adopter's wiring stays in their `extensions/<capability>/<adopter-slug>/spec.md`.
 2. Set `Status: Active` on the promoted spec.
 3. Remove the "Promotion path" section — it is no longer relevant.
 4. Update relative links to work from the spec's new location under `specs/`.

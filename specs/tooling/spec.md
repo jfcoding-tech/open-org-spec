@@ -122,7 +122,7 @@ When a canonical spec changes in a way that affects runtime behaviour (signalled
 2. Update the command file to reflect the change
 3. Update `canonical_spec_version` to the new version tag
 
-Adopter-specific context (Busuu wiring, extension points) is preserved during this update — only the standard execution logic is synced.
+Adopter-specific context (adopter wiring, extension points) is preserved during this update — only the standard execution logic is synced.
 
 ### Commands governance directory
 
@@ -150,6 +150,8 @@ Stamping enables adoption measurement. *"Which files have been touched by tool X
 **First-use plus last-use.** The conventional stamp records `first` (date of first invocation against the file), optionally `last` (date of most recent invocation, omitted when equal to first), and `by` (most recent invoker). Per-file invocation counts are not tracked; aggregate counts are answered by grep across the repo, not by per-file state.
 
 ## Artefacts
+
+`requires_owner_email: true` — artefact scaffolding for this capability requires `owner.email` from the adoption manifest (used when installing the pre-push hook). If `owner.email` is absent and the tooling artefacts need to be scaffolded, `adhere-to tooling` will emit a `gap` and pause scaffolding until the field is populated.
 
 Artefacts this capability requires in a conformant adopter repo when self-contained commands are present. `adhere-to tooling` reads this block and scaffolds missing or non-conformant artefacts automatically.
 
