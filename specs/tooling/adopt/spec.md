@@ -1,22 +1,55 @@
 # Adopt capability (command)
 
-Invoked as: `/adopt <capability-slug>`
+Invoked as: `/adopt` (no argument) or `/adopt <capability-slug>`
 Part of: [`tooling`](../spec.md) capability.
 
 ## Purpose
 
 Activate a capability in an existing open-org-spec adoption — guided, in a single run, with no manual file editing. Given a capability slug, the command reads the capability spec, scaffolds the required extension wiring, updates the manifest, wires command relays, and verifies conformance via `adhere-to`.
 
+Invoked **without a slug**, the command acts as a capability discovery guide: it reads the manifest and the standard's capability index and shows the adopter exactly what is active, what is proposed but not yet active, and what exists in the standard but is not yet declared — so the adopter can choose what to activate next.
+
 This is the per-capability counterpart to [`oos:adopt-manifest`](../../adoption-manifest/adopt.md), which bootstraps a new adoption from scratch. `/adopt` is for adopters who already have a manifest and want to activate an additional capability.
 
 The alternative without this command is: read the capability spec, manually create the extension wiring file, manually edit `config.yaml`, manually wire command relays, and run `adhere-to` to check. `/adopt` does all of that, in order, and surfaces gaps before the adopter commits.
 
+## No-argument mode (discovery)
+
+When invoked without a capability slug, the command reads `.open-org-spec/config.yaml` and `open-org-spec/specs/` and renders a capability map:
+
+```
+Capability status — <adopter name>
+
+Active (rules apply now):
+  ✓ governance-at-scope   Who decides at each scope
+  ✓ feedback-inbox        Open feedback inbox convention
+  ✓ people                People rosters at scope
+  ✓ tooling               Commands, agents, hooks
+  ✓ observability         Repo health indexes
+  ✓ spec-health           Conformance + catalogue agents
+  ... (all active)
+
+Proposed (declared, not yet active):
+  ○ capability-lifecycle  Formal capability change workflow
+  ○ adherence-check       Passive conformance validation
+
+Available in standard (not yet declared):
+  · federation            Multi-adoption orchestration
+  · contributor-registry  Contributor discovery and registry
+  · ... (any spec in open-org-spec/specs/ not in manifest)
+
+To activate a capability: /adopt <capability-slug>
+To check conformance on an active capability: /adhere-to <capability-slug>
+```
+
+**Sorting:** active first (alphabetical), then proposed (alphabetical), then available (alphabetical). Dependencies are noted inline — if an available capability requires another that is not active, flag it: `(requires: <dep>)`.
+
 ## Preconditions
 
 - `.open-org-spec/config.yaml` exists (refuse if not — redirect to `oos:adopt-manifest`).
-- The named capability exists in `open-org-spec/specs/<capability-slug>/spec.md` (refuse if not found).
-- The capability is not already `status: active` in the manifest (refuse and redirect to `/adhere-to <capability>` if it is).
-- The running contributor is the manifest owner declared in `config.yaml` (refuse if not — capability activation is a manifest-owner act).
+- When a slug is given: the named capability exists in `open-org-spec/specs/<capability-slug>/spec.md` (refuse if not found).
+- When a slug is given: the capability is not already `status: active` in the manifest (refuse and redirect to `/adhere-to <capability>` if it is).
+- When a slug is given: the running contributor is the manifest owner declared in `config.yaml` (refuse if not — capability activation is a manifest-owner act).
 
 ## Steps
 
