@@ -144,29 +144,13 @@ Three choices shaped this capability:
 
 3. **Risks don't reopen.** Allowing a terminal risk back to `open` would corrupt both the historical record (one file, one concern, one life) and the age-based RAG (a stale risk could be reset). Creating a new risk when a concern resurfaces costs almost nothing and keeps every record trustworthy.
 
-## Automated tooling (forthcoming)
+## Automated tooling
 
-Two agents are defined by this capability but not yet specced. They are tracked in the standard's backlog and will be added as separate files in this directory when their design is stable.
+**Risk registry** — risk records are aggregated by the catalogue agent via the `## Catalogue` block declared in this spec. The catalogue walks all `risks/` folders, classifies records by `id` field presence, and writes `risks.yaml` as part of the daily split catalogue. No separate registry agent is needed. The `registry.md` file in this directory is superseded by this catalogue integration.
 
-**Risk registry agent** (`registry.md`) — walks all `risks/` folders across governed scopes (excluding `projects/closed/`), aggregates all risk records into a machine-readable registry file, and writes a delta log of what changed since the previous run. Runs daily, delta-based (see backlog B-004). Produces:
+**Risk scanner agent** (`scanner.md`) — reads from the adopter's catalogue output (the `risks.yaml` sub-file) and routes a disposition request to each owner's scope `feedback.md` for risks that have breached their `escalation_threshold`. Uses the standard [disposition frame](#escalation-contract). Runs daily.
 
-```yaml
----
-generated: YYYY-MM-DDTHH:MM:00Z
-tool: risk-registry
-period_days: 1
-key_metrics:
-  open_risks: N
-  red_risks: N
-  amber_risks: N
-  unowned_risks: N
-  awaiting_disposition: N
----
-```
-
-**Risk scanner agent** (`scanner.md`) — scans the registry for risks that have breached their `escalation_threshold` and routes a disposition request to each owner's scope `feedback.md` using the standard disposition frame. Runs daily alongside the registry agent.
-
-Both agents are Case B standard capability agents (no project spec required — the spec is this document).
+The scanner is a Case B standard capability agent (no project spec required — the spec is this document).
 
 ## Catalogue
 
@@ -225,7 +209,7 @@ Contributed to the weekly report when this capability is `status: active` in the
 **Section title:** `Risk registry`
 
 **Data sources:**
-- Adopter-declared risk registry path — the aggregated registry file produced by the risk registry agent (see `registry.md`); contains all open risk records with their `rag`, `status`, and `owner` fields
+- `governance/catalogue/risks.yaml` — the risk sub-file in the adopter's split catalogue, generated daily by the catalogue agent; contains all risk records with their `rag`, `status`, `owner`, and `escalation_threshold` fields
 
 **Metrics:**
 | Metric | Source | Computation |
