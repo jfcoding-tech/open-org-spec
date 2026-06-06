@@ -202,7 +202,7 @@ Every agent must produce structured log entries on every run.
 Appended to the adopter-declared invocation log on every run (success or failure):
 
 ```
-- YYYY-MM-DD HH:MM UTC | /<agent-name> | files_read: N | catalogue_assisted: true/false | outcome: success/fail
+- YYYY-MM-DD HH:MM UTC | /<agent-name> | files_read: N | catalogue_assisted: true/false | outcome: success/fail | spec_version: <version>
 ```
 
 | Field | Meaning |
@@ -212,6 +212,7 @@ Appended to the adopter-declared invocation log on every run (success or failure
 | `files_read: N` | Count of distinct files the agent read during the run |
 | `catalogue_assisted: true/false` | `true` when the agent read the catalogue rather than walking the filesystem; `false` when it walked directly |
 | `outcome: success/fail` | `success` on a clean push; `fail` on any non-recovered error |
+| `spec_version: <version>` | The `canonical_spec_version` from the command's frontmatter. Present only for self-contained commands (those with a `canonical_spec` field). Omitted for interactive commands and for commands without a declared canonical spec. Enables retrospective drift detection — the log shows exactly which version of the spec each run executed against. |
 
 #### Failure log entry
 

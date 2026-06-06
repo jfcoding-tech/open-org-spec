@@ -169,7 +169,7 @@ Each agent run produces a structured record of what happened:
 - **Invocation log entry** — on every run (success or failure), the agent appends one entry to the adopter-declared invocation log:
 
   ```
-  YYYY-MM-DD HH:MM UTC | <agent> | files_read: N | catalogue_assisted: true/false | outcome: success/fail
+  YYYY-MM-DD HH:MM UTC | <agent> | files_read: N | catalogue_assisted: true/false | outcome: success/fail | spec_version: <version>
   ```
 
   `catalogue_assisted: true` when the agent read the catalogue file rather than walking the filesystem directly. The `catalogue` agent writes `false` because it generates, not consumes.
@@ -272,7 +272,7 @@ The activate command enforces this automatically:
 The log-invocation step appends one entry to the adopter-declared invocation log at the end of every command run:
 
 ```
-YYYY-MM-DD HH:MM UTC | /<command-name> | files_read: N | catalogue_assisted: true/false | outcome: success/fail
+YYYY-MM-DD HH:MM UTC | /<command-name> | files_read: N | catalogue_assisted: true/false | outcome: success/fail | spec_version: <version>
 ```
 
 `files_read` is the count of distinct files the command opened during the run. `catalogue_assisted: true` when the command read the catalogue instead of walking the filesystem for that data.
