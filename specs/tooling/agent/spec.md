@@ -17,7 +17,15 @@ Every agent must satisfy all four contracts. There are no exceptions.
 
 ### Contract 1 — Specification
 
-Every agent must have a project spec at `projects/<agent-name>/spec.md` that declares the following fields. Fields without defaults are required.
+**Two cases apply.**
+
+**Case A — Prototype agent** (a new pattern being validated before it becomes standard): every prototype agent must have a project spec at `projects/<agent-name>/spec.md`. The project validates the pattern in practice. When the close criterion is met, the project closes and the agent logic promotes to `open-org-spec/specs/`. The project spec is the governance artefact for the prototype phase.
+
+**Case B — Standard capability agent** (an adopter activating an agent defined by an already-graduated capability in `open-org-spec/specs/`): no project spec is required. The canonical spec in the standard replaces the project spec — the pattern has already been validated and the spec IS the governance artefact. The adopter declares the capability active in their manifest and runs the activation command; no new project is created.
+
+The remaining Contract 1 fields apply to **Case A only**. For Case B, the write scope declaration must still be made — it lives in the adopter's manifest or extension spec rather than a project spec.
+
+**Case A — Project spec fields** (prototype agents). Fields without defaults are required.
 
 | Field | Requirement |
 |---|---|
