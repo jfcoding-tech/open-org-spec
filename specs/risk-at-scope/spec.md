@@ -19,17 +19,18 @@ This capability codifies the recurring pattern so adopters don't re-derive it at
 
 ## Risk record schema
 
-A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` folder at the scope. The opening date is encoded in the filename. Fields are carried as YAML frontmatter:
+A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` folder at the scope. Fields are carried as YAML frontmatter:
 
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | Yes | Sequential identifier `R-NNN`. Declared by the author; suggested by [`/new-risk`](./new.md) from the risk registry. Unique within the registry's aggregation scope. |
 | `title` | Yes | Short label for the risk. |
 | `description` | Yes | Free-text statement of the risk: what could go wrong and why it matters. |
-| `rag` | Derived | `RED \| AMBER \| GREEN`. **Derived from objective criteria** (see [RAG derivation](#rag-derivation)), never manually declared. The author records the derived value; tools recompute it. |
+| `created_at` | Yes | ISO date (`YYYY-MM-DD`) on which the risk was first recorded. This is the authoritative creation date used for age and RAG computation — tools must use this field, not parse the filename. [`/new-risk`](./new.md) populates it automatically from today's date. |
+| `rag` | Derived | `RED \| AMBER \| GREEN`. **Derived from objective criteria** (see [RAG derivation](#rag-derivation)), never manually declared. The author records the derived value; tools recompute it from `created_at`, `status`, and `escalation_threshold`. |
 | `owner` | Yes | Named person(s) accountable for dispositioning the risk, declared at this scope (present in the scope's `people.md` or DACI). May be multiple. |
 | `status` | Yes | `open \| deferred \| mitigated \| accepted \| closed`. See [Status lifecycle](#status-lifecycle). |
-| `escalation_threshold` | Yes | Integer days of inactivity (since creation, while `open`) before the risk escalates. Drives RAG derivation and the [escalation contract](#escalation-contract). |
+| `escalation_threshold` | Yes | Integer days of inactivity (since `created_at`, while `open`) before the risk escalates. Drives RAG derivation and the [escalation contract](#escalation-contract). |
 | `disposition_at` | When dispositioned | ISO date (`YYYY-MM-DD`) of the last disposition action. Set whenever `status` changes or the risk is explicitly re-affirmed. |
 | `disposition_decision_ref` | When `accepted` (required); when `deferred` / `mitigated` (recommended) | Relative link to the decision record that dispositioned the risk. Required when `status: accepted` (points to the ADR). Recommended when `status: deferred` (points to the lightweight disposition record) and `status: mitigated` (points to the project decision or action that resolved it). |
 | `related` | Optional | Links to relevant project specs, feedback entries, ADRs, or other context. |
@@ -38,13 +39,13 @@ A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` f
 
 ## RAG derivation
 
-`rag` is **derived, never manually declared.** It is a function of `status`, the days elapsed since the risk's creation date (the date in the filename), and the `escalation_threshold`. Let `age` be the number of days since creation:
+`rag` is **derived, never manually declared.** It is a function of `status`, `created_at`, and `escalation_threshold`. Let `age` be the number of days between `created_at` and today:
 
 - **GREEN** — `status` is not `open` (any terminal or deferred state is, by definition, no longer a live red flag), OR `status: open` with `age < 50%` of `escalation_threshold`.
 - **AMBER** — `status: open` with `age` between `50%` and `100%` of `escalation_threshold` (i.e. `0.5 × threshold ≤ age < threshold`).
 - **RED** — `status: open` with `age ≥ escalation_threshold`, OR escalation has been explicitly requested (a contributor or owner can force RED ahead of the threshold).
 
-Because the value is derived, the `rag` field recorded in a file is a cached snapshot. Tools that read risks recompute it from `status`, the filename date, and `escalation_threshold`; a stale cached value is a `warning`, not a contradiction. The risk scanner is responsible for keeping cached values current.
+Because the value is derived, the `rag` field recorded in a file is a cached snapshot. Tools that read risks recompute it from `status`, `created_at`, and `escalation_threshold`; a stale cached value is a `warning`, not a contradiction. The risk scanner is responsible for keeping cached values current.
 
 ## Status lifecycle
 
