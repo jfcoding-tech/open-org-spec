@@ -31,6 +31,20 @@ Each scope's ADRs live in a sibling `decisions/` folder at the same scope — pe
 
 **The `decisions/` folder inherits DACI from the sibling `governance/` folder**; it does not re-declare ownership. A `decisions/README.md` describes only the recording convention.
 
+#### Decision record schema
+
+Every decision record is a markdown file named `YYYY-MM-DD-short-title.md`. The opening date is encoded in the filename. Required fields in the file body (prose header or frontmatter — adopter choice):
+
+| Field | Required | Meaning |
+|---|---|---|
+| `Status` | Yes | Current state: `proposed \| draft \| open \| accepted \| decided \| superseded \| closed \| archived` |
+| `Owner` | Yes | The person accountable for driving this decision to resolution |
+| `decided_at` | When status is closed | ISO date (`YYYY-MM-DD`) when the decision reached its final state. Enables time-to-decision measurement. Required as soon as `Status` transitions to any resolved value. |
+
+**`decided_at` discipline.** When a decision's status changes to a resolved value (`accepted`, `decided`, `superseded`, `closed`, `archived`), the author must add `decided_at` in the same commit. This is the only reliable way to measure decision velocity — git log approximations exist but are lossy (the status field may have been touched for reasons other than resolution). The explicit date is the authoritative source.
+
+For decisions predating this convention: `decided_at` may be backfilled using `git log --follow -p <file>` to identify the commit where the status last changed to a resolved value.
+
 ### Convention: every governance folder declares, at minimum
 
 The governance folder's README declares:
