@@ -143,7 +143,7 @@ Action: generate suggestion — catalogue fast-path could reduce file reads.
 Confidence: HIGH.
 
 **Rule 2 — Context isolation not applied**
-Trigger: any command in the adopter-declared Tier 1 command list that shows `subagents: 0` (or subagents field absent) across ALL runs this week. The Tier 1 list is an extension point — the adopter declares the commands expected to use subagents for context isolation.
+Trigger: any command in the adopter-declared Tier 1 command list that shows `subagents: 0` (or subagents field absent) across ALL runs this week, **and** whose command file does not declare `execution_context: automated`. Commands with `execution_context: automated` are excluded — they run in CI environments where subagents are not spawned by design, not by omission.
 Action: generate suggestion — subagent execution not detected; confirm context isolation is applied.
 Confidence: HIGH.
 

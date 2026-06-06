@@ -58,6 +58,23 @@ Every command in an adopter's tooling directory is either **repo-wide** or **sco
 
 Scope ownership determines who may change the command. A scoped command's content, behaviour, and extension points are the owning scope's decision. The infrastructure team governs the command directory's structure and the relay convention, not the commands themselves.
 
+### Execution context declaration
+
+Commands may declare their execution context in frontmatter:
+
+```yaml
+execution_context: automated | interactive
+```
+
+| Value | Meaning |
+|---|---|
+| `automated` | The command runs unattended — wired to a schedule or invoked with `--dangerously-skip-permissions`. Subagent spawning is not expected; context isolation optimisations do not apply. |
+| `interactive` | The command runs in a live session with a contributor present. Default when the field is absent. |
+
+This field is used by observability tooling to apply optimisation rules appropriately. In particular, Rule 2 of the optimisation detection (context isolation) is skipped for commands with `execution_context: automated` — such commands run in CI environments where subagents are not spawned by design, not by omission.
+
+Self-contained commands (those with `canonical_spec` in frontmatter) that run in automated contexts should always declare `execution_context: automated`.
+
 ### Canonical spec location for scoped commands
 
 A scoped command's full definition — what it does, how it behaves, what it reads — lives at `<scope>/tools/<name>.md` within the owning scope. The `tools/` folder is the governed home for scope-local tooling specs. It sits at the scope root alongside `README.md`, `people.md`, and `decisions/`.
