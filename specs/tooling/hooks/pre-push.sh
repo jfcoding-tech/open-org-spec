@@ -15,9 +15,9 @@ CURRENT_EMAIL=$(git config user.email 2>/dev/null)
 # Only gate the manifest owner — all other contributors are unaffected
 if [ "$CURRENT_EMAIL" = "$OWNER_EMAIL" ] && [ -f "$SENTINEL" ] && [ -s "$SENTINEL" ]; then
   echo ""
-  echo "ERROR: open-org-spec drift check is pending."
-  echo "  Run /adhere-to tooling to check for drift and clear the sentinel before pushing."
-  echo "  Sentinel: $SENTINEL"
+  echo "open-org-spec was bumped — run /adhere-to tooling before pushing."
+  echo "  This checks whether any commands need updating for the new standard version."
+  echo "  Once the check is complete it will unblock this push automatically."
   echo ""
   exit 1
 fi

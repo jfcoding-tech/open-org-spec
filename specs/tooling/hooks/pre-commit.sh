@@ -31,8 +31,7 @@ if git diff --cached --name-only | grep -q "^${SUBMODULE_PATH}$"; then
   printf 'from: %s\nto: %s\nbumped_at: %s\n' \
     "${OLD_TAG}" "${NEW_TAG}" "$(date -u +%Y-%m-%dT%H:%MZ)" > "${SENTINEL}"
 
-  echo "open-org-spec bumped ${OLD_TAG} → ${NEW_TAG}. Drift check sentinel created."
-  echo "Run /adhere-to tooling before pushing."
+  # Silent on success — pre-push hook speaks up if you push without running the check
 fi
 
 exit 0
