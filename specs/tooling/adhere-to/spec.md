@@ -101,16 +101,72 @@ The entry follows the substantive-observation format defined by `feedback-inbox`
 
 **Idempotence.** Re-runs of `adhere-to` should not duplicate entries. The tool checks the affected inbox for an existing entry referencing the same gap (matched by path + rule). If found and unresolved, skip. If found and resolved but the gap persists, re-open with a note pointing at the prior entry.
 
-### Step 4 — Wire up commands (first activation only)
+### Step 4 — Scaffold artefacts
 
-When `adhere-to` runs against a capability for the first time (the manifest's `activated` date matches today's date, or the capability has no relays in the adopter's command directory), the tool also scaffolds command relays per the [`adoption-manifest`](../../adoption-manifest/spec.md) capability's "Command discoverability and invocability" section:
+Every capability spec may declare an `## Artefacts` section containing a fenced YAML block. This block is the canonical, machine-readable declaration of what physical artefacts a conformant adopter repo must contain. `adhere-to` reads this block and scaffolds any missing or non-conformant artefacts.
+
+#### Artefact schema
+
+```yaml
+artefacts:
+  - id: <unique slug within this capability>
+    type: file | gitignore_entry | directory
+    path: <path in the adopter repo>                            # supports {{variable_name}}
+    template: <path in open-org-spec, relative to repo root>   # type: file only
+    variables:                                                  # optional; apply to path, template content, and check.value
+      - name: <variable_name>                                   # referenced as {{variable_name}}
+        source: config.yaml#<dotted.path>                       # read from adoption manifest
+                | git_config#<key>                              # read from git config
+                | standard#manifest_dir                        # directory containing config.yaml
+                | standard#git_hooks_dir                       # git config core.hooksPath, defaulting to .git/hooks
+    check:
+      type: file_exists | file_executable | file_contains | directory_exists | gitignore_entry
+      value: <string>                                           # supports {{variable_name}}; required for file_contains and gitignore_entry
+    condition:                                                  # optional — skip artefact if condition is false
+      type: config_equals | scan_frontmatter
+      # config_equals: check a config.yaml field
+      config_path: <dotted.path in config.yaml>                # config_equals only
+      equals: <value>                                           # config_equals only
+      # scan_frontmatter: check whether any file in a directory has a frontmatter field
+      directory: standard#adopter_command_dir                  # scan_frontmatter only
+      frontmatter_field: <field name>                          # scan_frontmatter only
+```
+
+**Standard variable sources:**
+
+| Source | Resolves to |
+|---|---|
+| `standard#manifest_dir` | Directory containing `config.yaml` (e.g. `.open-org-spec`) |
+| `standard#git_hooks_dir` | `git config core.hooksPath`, defaulting to `.git/hooks` if unset |
+| `standard#adopter_command_dir` | The adopter's command directory for the active LLM interface (e.g. `.claude/commands` for Claude Code) |
+
+**Variable substitution** applies to `path`, template file content, and `check.value` — wherever `{{variable_name}}` appears.
+
+#### How `adhere-to` processes artefacts
+
+For each entry in the `artefacts` block:
+
+1. **Resolve variables.** Resolve all declared variables by reading their `source`. Substitute `{{variable_name}}` in `path`, template content, and `check.value`.
+2. **Evaluate condition.** If a `condition` is declared:
+   - `config_equals` — read the value at `config_path` in `config.yaml`. Skip if it does not equal `equals`.
+   - `scan_frontmatter` — scan files in `directory` for any file containing `frontmatter_field` in its frontmatter. Skip the artefact if none found.
+3. **Check.** Apply the `check` rule against the adopter repo. If the check passes, the artefact is conformant — skip.
+4. **Scaffold.** If the check fails:
+   - `type: file` — write the template (with variable substitution) to `path`. After writing: if `check.type` is `file_executable`, set executable permission (`chmod +x` on Unix). On Windows, note that executable permission does not apply but git will invoke the hook via its bundled bash regardless.
+   - `type: gitignore_entry` — append the resolved `check.value` to `.gitignore` if not present.
+   - `type: directory` — create the directory at `path` if absent.
+5. **Report.** Include scaffolded artefacts in the Step 5 summary.
+
+#### Command relay scaffolding (subset of artefacts)
+
+Command relays are a specialised artefact type handled by the existing relay convention. On first activation (the manifest's `activated` date matches today's date, or no relays exist in the adopter's command directory for this capability):
 
 - For each command file the capability declares (`adopt.md`, `new.md`, `extend.md`, or other `<verb>.md`), create a relay at the adopter's command path (e.g. `.claude/commands/<command-name>.md`).
 - Add a row to the adopter's commands README under "Standard commands (from active capabilities)" linking the relay to the canonical command spec.
 
-**Authority.** The relay scaffolding and README update are mechanical edits within the manifest owner's governance scope — they are not content edits. `adhere-to` is invoked by the manifest owner (or by another contributor with their explicit consent recorded), and the wiring step proceeds without per-file confirmation. This is the deliberate exception to the tool's general principle of not modifying files unilaterally: relays are derived from the capability spec, the README is the ownership index the manifest owner maintains, and both are governed by the same authority that invoked the command.
+Subsequent runs skip relay creation — relays already exist. Re-wiring after a capability change is a manual operation by the manifest owner.
 
-Subsequent runs of `adhere-to` against the same capability skip this step — the relays already exist. Re-wiring after a capability change is a manual operation by the manifest owner.
+**Authority.** All artefact scaffolding (files, gitignore entries, directories, relays, README updates) is a mechanical operation within the manifest owner's governance scope. `adhere-to` proceeds without per-file confirmation when invoked by the manifest owner. This is the deliberate exception to the tool's general principle of not modifying files unilaterally — artefacts are derived from the capability spec, which the manifest owner has activated.
 
 ### Step 5 — Surface summary
 
@@ -120,6 +176,7 @@ At the end of the run, the tool produces a single summary to the adopter:
 - **Affected areas**: N paths scanned.
 - **Gaps**: N gaps identified, broken down by owner and severity if the capability defines severities.
 - **Feedback entries**: N opened (with paths), 0 duplicates skipped.
+- **Artefacts scaffolded**: N files/entries created or fixed, broken down by artefact id. Or "skipped (all conformant)".
 - **Commands wired**: N relays created on first activation, or "skipped (already wired)".
 - **Fixed inline** (fix-with-me only): N gaps written to the working tree, with affected paths. Reviewer should inspect working-tree state before saving.
 - **Next steps**: each owner reviews the entries in their inbox; the manifest owner reviews the summary and either lets the adoption proceed or accepts gaps as recorded follow-ups in the manifest's `note` field.

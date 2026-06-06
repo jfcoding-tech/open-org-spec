@@ -26,6 +26,7 @@ standard_version: "<x.y.z>"
 owner:
   name: <full name>
   role: <organisational role>
+  email: <git email address>            # optional but required for artefact scaffolding
 
 capabilities:
   <capability-slug>:
@@ -38,7 +39,7 @@ capabilities:
 ```
 
 - `standard_version` — the version of open-org-spec the adopter is pinning to. Capabilities are read against this version; if the standard moves on, the adopter chooses when to upgrade.
-- `owner` — the person accountable for the manifest. The only person authorised to change capability statuses (activate, deactivate, extend) without explicit consent. Schema matches `governance-at-scope`'s owner. Required.
+- `owner` — the person accountable for the manifest. The only person authorised to change capability statuses (activate, deactivate, extend) without explicit consent. Schema matches `governance-at-scope`'s owner. Required. The `email` sub-field is optional but required when capabilities declare artefacts that need owner identity at install time (e.g., the tooling capability's pre-push hook).
 - `<capability-slug>` — matches the folder name under `open-org-spec/specs/`. Examples: `people`, `governance-at-scope`, `project`, `tooling`, `feedback-inbox`.
 - `status` — see "Capability statuses" below.
 - `activated` — the date the capability transitioned to `active`. Required for traceability when reviewing adoption history.

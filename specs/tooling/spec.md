@@ -149,6 +149,47 @@ Stamping enables adoption measurement. *"Which files have been touched by tool X
 
 **First-use plus last-use.** The conventional stamp records `first` (date of first invocation against the file), optionally `last` (date of most recent invocation, omitted when equal to first), and `by` (most recent invoker). Per-file invocation counts are not tracked; aggregate counts are answered by grep across the repo, not by per-file state.
 
+## Artefacts
+
+Artefacts this capability requires in a conformant adopter repo when self-contained commands are present. `adhere-to tooling` reads this block and scaffolds missing or non-conformant artefacts automatically.
+
+```yaml
+artefacts:
+  - id: pre-push-hook
+    type: file
+    path: "{{hooks_dir}}/pre-push"
+    template: specs/tooling/hooks/pre-push.sh
+    variables:
+      - name: hooks_dir
+        source: standard#git_hooks_dir
+      - name: owner_email
+        source: config.yaml#owner.email
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_executable
+    condition:
+      type: scan_frontmatter
+      directory: standard#adopter_command_dir
+      frontmatter_field: canonical_spec
+
+  - id: drift-sentinel-gitignore
+    type: gitignore_entry
+    path: .gitignore
+    variables:
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: gitignore_entry
+      value: "{{manifest_dir}}/drift-check-pending"
+    condition:
+      type: scan_frontmatter
+      directory: standard#adopter_command_dir
+      frontmatter_field: canonical_spec
+```
+
+Both artefacts use `scan_frontmatter` as their condition — they are only scaffolded when the adopter's command directory contains at least one file with `canonical_spec` in its frontmatter (i.e., at least one self-contained command exists). Adopters without self-contained commands are unaffected. The manifest directory and hooks directory are resolved at runtime via standard variables, not hardcoded.
+
 ## What is not prescribed
 
 - **The specific LLM interface or deployment mechanism.** Commands are described generically; the `.claude/commands/` path is the Claude Code convention, not a standard requirement.
