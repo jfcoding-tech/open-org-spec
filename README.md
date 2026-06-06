@@ -35,6 +35,7 @@ Two kinds of repositories use this standard:
   - `observability` — org-health metrics and contributor activity dashboards
   - `adherence-check` — conformance reports against any active capability
 - [`templates/`](./templates/) — copy-paste starters for artefacts defined by the capabilities in [`specs/`](./specs/).
+- [`WHY.md`](./WHY.md) — why an organisation would adopt this: the problem, the pattern, and what it looks like in practice.
 - [`GUIDE.md`](./GUIDE.md) — how to use the standard in an organisation.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — how to contribute to the standard itself (commit conventions, versioning, promotion checklist).
 - [`feedback/`](./feedback/) — feedback from adopters.
