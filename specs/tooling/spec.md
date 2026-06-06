@@ -236,9 +236,35 @@ artefacts:
       type: scan_frontmatter
       directory: standard#adopter_command_dir
       frontmatter_field: canonical_spec
+
+  - id: relay-adopt
+    type: file
+    path: "{{adopter_command_dir}}/adopt.md"
+    template: specs/tooling/adopt/relay.md
+    variables:
+      - name: adopter_command_dir
+        source: standard#adopter_command_dir
+      - name: standard_version
+        source: config.yaml#standard_version
+    check:
+      type: file_exists
+
+  - id: relay-adhere-to
+    type: file
+    path: "{{adopter_command_dir}}/adhere-to.md"
+    template: specs/tooling/adhere-to/relay.md
+    variables:
+      - name: adopter_command_dir
+        source: standard#adopter_command_dir
+      - name: standard_version
+        source: config.yaml#standard_version
+    check:
+      type: file_exists
 ```
 
-Both artefacts use `scan_frontmatter` as their condition — they are only scaffolded when the adopter's command directory contains at least one file with `canonical_spec` in its frontmatter (i.e., at least one self-contained command exists). Adopters without self-contained commands are unaffected. The manifest directory and hooks directory are resolved at runtime via standard variables, not hardcoded.
+The hook artefacts use `scan_frontmatter` as their condition — they are only scaffolded when the adopter's command directory contains at least one self-contained command. The relay artefacts (`relay-adopt`, `relay-adhere-to`) have no condition — they are scaffolded for every adopter of the `tooling` capability, because these are the framework meta-commands every adopter should have. The manifest directory and hooks directory are resolved at runtime via standard variables, not hardcoded.
+
+When `adhere-to tooling` runs (automatically on every version bump via the pre-push hook's drift check), it checks whether `adopt.md` and `adhere-to.md` exist in the adopter's command directory. If either is absent — because it was added to the standard after the adopter activated `tooling` — it scaffolds it from the relay template. This makes every new framework meta-command self-wiring on the next version bump.
 
 ## What is not prescribed
 
