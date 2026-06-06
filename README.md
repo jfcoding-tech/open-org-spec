@@ -38,7 +38,6 @@ Two kinds of repositories use this standard:
 - [`WHY.md`](./WHY.md) — why an organisation would adopt this: the problem, the pattern, and what it looks like in practice.
 - [`GUIDE.md`](./GUIDE.md) — how to use the standard in an organisation.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — how to contribute to the standard itself (commit conventions, versioning, promotion checklist).
-- [`feedback/`](./feedback/) — feedback from adopters.
 - [`backlog.md`](./backlog.md) — deferred work against the standard itself.
 
 ## Getting started (for adopters)
@@ -67,7 +66,7 @@ Early and deliberately incomplete. Version: **0.1.6**. The standard grows from r
 
 ## Feedback
 
-Adopters are encouraged to share their experience. Channels are described in [`feedback/README.md`](./feedback/README.md).
+Adopters are encouraged to share their experience. Open a [GitHub Issue](https://github.com/Busuu/open-org-spec/issues) or email `javier.fdez@gmail.com` with subject `[open-org-spec feedback] <one-line summary>`.
 
 ## License
 
