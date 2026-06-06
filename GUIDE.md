@@ -37,4 +37,4 @@ The LLM is the enforcer of the standard, not the author of the ideas. The ideas 
 
 ## Feedback
 
-Adopters are encouraged to share their experience. See [`feedback/README.md`](./feedback/README.md) for channels.
+Adopters are encouraged to share their experience. Open a [GitHub Issue](https://github.com/Busuu/open-org-spec/issues) or email `javier.fdez@gmail.com` with subject `[open-org-spec feedback] <one-line summary>`.
