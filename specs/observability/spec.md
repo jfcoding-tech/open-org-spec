@@ -107,6 +107,37 @@ Worked example: an adopter writes the capability extension at `.open-org-spec/ex
 
 *(An `oos:adopt-observability` command that scaffolds the manifest entry, the extension files, and the relays is deferred until a second adopter instance.)*
 
+## Reporting
+
+Contributed to the weekly report when this capability is `status: active` in the adopter manifest. The agent-metrics tool reads this section to determine what metrics to compute and render for this capability.
+
+**Section title:** `Observability`
+
+**Data sources:**
+- Invocation log — entries for `owner-health`, `inbox-health`, `decision-health`, `contributor-activity`, and `spec-activity` for the past 7 days (run count, `catalogue_assisted` field, timestamps)
+- Observability output files — generation timestamps from each tool's output file header (e.g. `governance/observability/owner-health.md`)
+
+**Metrics:**
+| Metric | Source | Computation |
+|---|---|---|
+| Run count (per tool) | Invocation log | Count of entries for that tool in the 7-day window |
+| Catalogue-assisted % (per tool) | Invocation log | Fraction of entries for that tool with `catalogue_assisted: true` |
+| Last run timestamp (per tool) | Invocation log or output file header | Most recent entry timestamp for that tool |
+
+**Render:** Per-tool table, one row per observability tool that has at least one invocation log entry in the period:
+
+```
+| Tool | Runs | Catalogue-assisted % | Last run |
+|---|---|---|---|
+| /owner-health | N | N% | YYYY-MM-DD |
+| /inbox-health | N | N% | YYYY-MM-DD |
+| /decision-health | N | N% | YYYY-MM-DD |
+| /contributor-activity | N | N% | YYYY-MM-DD |
+| /spec-activity | N | N% | YYYY-MM-DD |
+```
+
+Tools with no invocation log entries in the period are listed with `—` in all columns.
+
 ## Related
 
 - [`./owner-health/spec.md`](./owner-health/spec.md) — first tool: people-involvement aggregation.

@@ -168,6 +168,29 @@ Optimisation suggestions: N new | N resolved | N stale | N pending review — se
 
 If bootstrapping: `Optimisation detection: bootstrapping (N/14 days). Starts YYYY-MM-DD.`
 
+## Capability-driven composition
+
+The weekly report is not a fixed template. Its sections are assembled dynamically by reading the adopter's `config.yaml` and iterating over the active capabilities in capability-tree order.
+
+For each capability declared as `status: active` in `config.yaml`, the agent:
+
+1. Looks up the capability's canonical spec file using the capability spec paths lookup table (see Extension points below).
+2. Reads the `## Reporting` section from that spec file.
+3. If the spec file has no `## Reporting` section, the capability is silently skipped — no error, no placeholder.
+4. If the `## Reporting` section is present, the agent computes the declared metrics from the declared data sources and appends the rendered output to the weekly report section.
+
+**What this means in practice:** activate a capability in `config.yaml` and its reporting section automatically appears in the next weekly report. Deactivate it and the section disappears. The report grows with the adoption — no changes to the agent-metrics spec or wiring are required.
+
+The capability spec paths lookup table is the adopter's responsibility (see Extension points). It maps capability names as they appear in `config.yaml` to the file path of each capability's canonical spec. The agent reads this table at the start of Step 6 before iterating capabilities.
+
+### Capability-tree order
+
+Capabilities are iterated in the order they appear in `config.yaml`, which should follow capability-tree order (foundational capabilities first, derived ones last). This produces a report where foundational concerns (spec health, governance) appear before derived concerns (observability, risk). The adopter controls the order by the order of entries in their manifest.
+
+### No `## Reporting` block
+
+A capability spec without a `## Reporting` section is not an error condition. It means the capability author has not yet defined what to report — the agent skips it gracefully and moves to the next capability. This allows capabilities to be active without contributing to the report until their reporting block is authored.
+
 ## Data contracts
 
 **Weekly report section format** (appended to the report file):
@@ -245,6 +268,7 @@ An on-demand companion to the scheduled agent. The dashboard command (`/agent-me
 | Contributor usage output path | Where the contributor-usage table is written (Step 8) | *(required for Step 8)* |
 | Optimisation suggestions path | Where optimisation suggestions are written (Step 10) | *(required for Step 10)* |
 | Tier 1 commands | Commands expected to use subagents (Step 10 Rule 2) | *(required for Rule 2)* |
+| Capability spec paths | Lookup table mapping capability name (as declared in `config.yaml`) to the canonical spec file path for that capability; used in capability-driven composition to resolve each active capability's `## Reporting` block | *(required)* |
 
 ## Rationale
 

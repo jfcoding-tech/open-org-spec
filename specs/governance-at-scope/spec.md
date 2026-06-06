@@ -136,6 +136,32 @@ Making governance machine-readable (frontmatter) enables mechanical contradictio
 
 See [`adopt.md`](./adopt.md) for the guided flow that scaffolds a governance folder at a chosen scope.
 
+## Reporting
+
+Contributed to the weekly report when this capability is `status: active` in the adopter manifest. The agent-metrics tool reads this section to determine what metrics to compute and render for this capability.
+
+**Section title:** `Governance`
+
+**Data sources:**
+- `governance/catalogue/decisions.yaml` — open decision count (decisions where `status: proposed` or equivalent open status) and oldest open decision creation date
+- `governance/catalogue/feedback-inboxes.yaml` — total open feedback entries (unresolved `→ <name>` addressee markers across all scopes), and count of distinct scopes carrying at least one open entry
+
+**Metrics:**
+| Metric | Source | Computation |
+|---|---|---|
+| Open decisions | `decisions.yaml` | Count of decisions where `status` is an open value (`proposed`, `open`, `draft`) |
+| Oldest open decision age | `decisions.yaml` | Days elapsed since the creation date of the oldest open decision |
+| Total open feedback entries | `feedback-inboxes.yaml` | Sum of unresolved entries across all scopes |
+| Scopes with open feedback | `feedback-inboxes.yaml` | Count of distinct scopes that have at least one open feedback entry |
+
+**Render:** 3–4 bullet summary. Example:
+
+```
+- Open decisions: N (oldest: N days)
+- Open feedback entries: N across N scopes
+- No decisions overdue / N decisions past 30-day threshold
+```
+
 ## Related
 
 - [`adopt.md`](./adopt.md) — the adoption command for this capability.

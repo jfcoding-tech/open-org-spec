@@ -148,6 +148,30 @@ Both agents are Case B standard capability agents (no project spec required — 
 
 See [`new.md`](./new.md) for the `/new-risk` command that scaffolds a new risk record.
 
+## Reporting
+
+Contributed to the weekly report when this capability is `status: active` in the adopter manifest. The agent-metrics tool reads this section to determine what metrics to compute and render for this capability.
+
+**Section title:** `Risk registry`
+
+**Data sources:**
+- Adopter-declared risk registry path — the aggregated registry file produced by the risk registry agent (see `registry.md`); contains all open risk records with their `rag`, `status`, and `owner` fields
+
+**Metrics:**
+| Metric | Source | Computation |
+|---|---|---|
+| Open risks | Risk registry | Count of records where `status: open` |
+| RED risks | Risk registry | Count of `status: open` records where `rag: RED` |
+| AMBER risks | Risk registry | Count of `status: open` records where `rag: AMBER` |
+| Unowned risks | Risk registry | Count of records where `owner` is empty or absent |
+
+**Render:** 1–2 bullet summary. If the risk registry path is absent or the file does not exist, render: `No data — risk registry not yet populated`. Otherwise:
+
+```
+- Open risks: N (RED: N, AMBER: N, GREEN: N)
+- Unowned: N
+```
+
 ## Related
 
 - [`../feedback-inbox/spec.md`](../feedback-inbox/spec.md) — the escalation contract writes disposition requests to a scope's `feedback.md`; required dependency.

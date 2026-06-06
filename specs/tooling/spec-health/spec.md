@@ -288,6 +288,35 @@ artefacts:
 
 The `merge=union` strategy keeps all lines from both sides of a conflict — correct for append-only logs. Without these entries, concurrent agent commits and contributor commits produce rebase conflicts on every run.
 
+## Reporting
+
+Contributed to the weekly report when this capability is `status: active` in the adopter manifest. The agent-metrics tool reads this section to determine what metrics to compute and render for this capability.
+
+**Section title:** `Spec health`
+
+**Data sources:**
+- `governance/catalogue/index.yaml` — freshness timestamp (when the catalogue was last generated)
+- `governance/catalogue/specs.yaml` — per-spec field presence (used to count missing owner and missing status)
+- Invocation log — conformance and catalogue run entries for the period (used to derive run outcomes)
+
+**Metrics:**
+| Metric | Source | Computation |
+|---|---|---|
+| Catalogue age | `index.yaml` `generated` field | Hours elapsed since the `generated` timestamp to now |
+| Specs missing owner | `specs.yaml` | Count of specs where `owner` is empty string |
+| Specs missing status | `specs.yaml` | Count of specs where `status` is empty string |
+| Conformance run outcome | Invocation log | Most recent `conformance` entry's `outcome` field (`success` / `fail`) |
+| Catalogue run outcome | Invocation log | Most recent `catalogue` entry's `outcome` field (`success` / `fail`) |
+
+**Render:** 3–4 bullet summary. Example:
+
+```
+- Catalogue generated N hours ago (conformance run: success / fail)
+- Specs missing owner: N
+- Specs missing status: N
+- Open conformance gaps total: N
+```
+
 ## Related
 
 - [`activate.md`](activate.md) — the `/spec-health-activate` command that wires the suite from `config.yaml`
