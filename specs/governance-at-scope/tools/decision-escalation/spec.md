@@ -32,9 +32,15 @@ Routing a disposition request rather than a bare reminder forces the open decisi
 
 ## Pattern
 
+### Execution optimisations
+
+**Delta mode (fast-path for subsequent runs).** Before walking all decision folders, read the adopter-declared invocation log and find the timestamp of the last successful `decision-escalation` run. Use `git log --since="<timestamp>" --name-only` filtered to decision folder paths to build a reduced file list. Only walk decisions that changed since that run, plus any decision already known to be open from the previous run (open decisions must be re-evaluated for staleness even if unchanged). On the very first run, or if the log is absent, fall back to a full walk.
+
+**Catalogue fast-path.** When the [catalogue](../../../tooling/catalogue/spec.md) capability is active and the `decisions.yaml` sub-file is fresh (< 25 hours), this tool MAY read it directly instead of walking decision folders — the sub-file holds status, scope, and owner for every known decision record, making the walk unnecessary.
+
 ### Step 1 — Walk decision folders
 
-Walk all adopter-declared decision folder paths. Collect every decision record found. Exclusions: template files, README files. When the [catalogue](../../../tooling/catalogue/spec.md) capability is active, this tool MAY read `decisions.yaml` directly instead of walking the folders — that sub-file holds the decision entries this tool needs.
+Walk all adopter-declared decision folder paths. Collect every decision record found. Exclusions: template files, README files. Apply the delta mode fast-path above when available.
 
 ### Step 2 — Classify status
 
