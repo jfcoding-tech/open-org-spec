@@ -133,6 +133,8 @@ When a project transitions to `closed` or `cancelled`, the owner performs a **cl
 - **Sister projects** — continuations or derived projects already in motion. Action: link; this project does not absorb their work.
 - **Capability candidates** — did a reusable pattern emerge? Name the second project that would validate it. Promotion is the infrastructure owner's call, not the closing project owner's.
 
+**Risk disposition audit.** Before a project can transition to `closed` or `cancelled`, all risk records in the project's `risks/` folder must be in a terminal state (`mitigated`, `accepted`, `closed`). Any risk with `status: open` or `status: deferred` blocks project closure. The closing audit must confirm: "all risks resolved or accepted" before the project spec's status is updated. This check only applies when `risk-at-scope` is active.
+
 **Actions available in the audit:**
 
 - **moved** — the content already lives at the destination. Requires the project owner to own the destination, or the destination owner to have given explicit consent.

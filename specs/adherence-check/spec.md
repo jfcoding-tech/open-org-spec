@@ -177,6 +177,19 @@ The submodule bump must not be pushed while `violation` findings remain open. Th
 
 **Scope.** This check only applies to commands that run in an automated context (scheduled or `--dangerously-skip-permissions`), as defined in [`../tooling/spec.md`](../tooling/spec.md#self-contained-commands). Interactive relays are not self-contained and are not subject to drift checking.
 
+#### Against risk-at-scope
+
+This check only runs when `risk-at-scope` is declared `active` in the adoption manifest.
+
+- **Risk record required fields.** For each `risks/YYYY-MM-DD-*.md` found: validate `id`, `title`, `description`, `owner`, `status`, `escalation_threshold`, `disposition_at`. Missing fields emit a `gap`.
+- **`id` format valid.** Must match `R-[0-9]+`. Invalid format emits a `violation`.
+- **`status` valid vocabulary.** Must be `open | deferred | mitigated | accepted | closed`. Other values emit a `violation`.
+- **`disposition_decision_ref` present for `accepted`.** A risk with `status: accepted` must have `disposition_decision_ref` pointing to an existing decision record. Missing or broken ref emits a `violation` — formal acceptance without a decision record is a governance failure.
+- **`disposition_decision_ref` recommended for `deferred`.** A risk with `status: deferred` without `disposition_decision_ref` emits a `warning` — deferral without a rationale record is a weak governance signal.
+- **No open risks in closed projects.** If a `risks/*.md` file exists under `projects/closed/`, any risk with `status: open` emits a `violation` — projects must close all risks before archiving.
+- **`rag` not manually declared.** The `rag` field is derived; if present in the file it must not contradict the computed value (days open vs `escalation_threshold`). A mismatched `rag` emits a `warning`.
+- **Owner declared at scope.** The `owner` field must name a person declared in the scope's `people.md` or governance DACI. Unresolvable owner emits a `warning`.
+
 ## What adherence-check is not
 
 - **A fix tool.** It reports; it does not mutate. Fixes are authored through the [`capability-lifecycle`](../capability-lifecycle/spec.md) workflow.

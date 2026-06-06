@@ -31,6 +31,8 @@ Each scope's ADRs live in a sibling `decisions/` folder at the same scope — pe
 
 **The `decisions/` folder inherits DACI from the sibling `governance/` folder**; it does not re-declare ownership. A `decisions/README.md` describes only the recording convention.
 
+**When `risk-at-scope` is active:** a `risks/` folder sits alongside `decisions/` at the same scope, as a peer. Risk records live there. The same DACI that governs decisions at this scope governs risk acceptance — the Approver declared in `governance/README.md` is the authority for `accepted` risk transitions at this scope.
+
 #### Decision record schema
 
 Every decision record is a markdown file named `YYYY-MM-DD-short-title.md`. The opening date is encoded in the filename. Required fields in the file body (prose header or frontmatter — adopter choice):
