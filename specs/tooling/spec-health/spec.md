@@ -277,6 +277,45 @@ YYYY-MM-DD HH:MM UTC | /<command-name> | files_read: N | catalogue_assisted: tru
 
 `files_read` is the count of distinct files the command opened during the run. `catalogue_assisted: true` when the command read the catalogue instead of walking the filesystem for that data.
 
+## Artefacts
+
+The suite's log files are written by multiple automated agents and by the invocation log step in every command. Concurrent commits cause merge conflicts unless git is configured to use a union merge strategy for these files. `adhere-to spec-health` scaffolds these entries automatically.
+
+```yaml
+artefacts:
+  - id: invocation-log-gitattributes
+    type: gitattributes_entry
+    path: .gitattributes
+    variables:
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: gitattributes_entry
+      value: "{{manifest_dir}}/spec-health/invocation-log.md merge=union"
+
+  - id: failure-log-gitattributes
+    type: gitattributes_entry
+    path: .gitattributes
+    variables:
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: gitattributes_entry
+      value: "governance/observability/spec-health/agent-failures.md merge=union"
+
+  - id: warnings-log-gitattributes
+    type: gitattributes_entry
+    path: .gitattributes
+    variables:
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: gitattributes_entry
+      value: "governance/observability/spec-health/agent-warnings.md merge=union"
+```
+
+The `merge=union` strategy keeps all lines from both sides of a conflict — correct for append-only logs. Without these entries, concurrent agent commits and contributor commits produce rebase conflicts on every run.
+
 ## Related
 
 - [`activate.md`](activate.md) — the `/spec-health-activate` command that wires the suite from `config.yaml`

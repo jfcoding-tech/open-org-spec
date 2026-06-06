@@ -110,7 +110,7 @@ Every capability spec may declare an `## Artefacts` section containing a fenced 
 ```yaml
 artefacts:
   - id: <unique slug within this capability>
-    type: file | gitignore_entry | directory
+    type: file | gitignore_entry | gitattributes_entry | directory
     path: <path in the adopter repo>                            # supports {{variable_name}}
     template: <path in open-org-spec, relative to repo root>   # type: file only
     variables:                                                  # optional; apply to path, template content, and check.value
@@ -120,8 +120,8 @@ artefacts:
                 | standard#manifest_dir                        # directory containing config.yaml
                 | standard#git_hooks_dir                       # git config core.hooksPath, defaulting to .git/hooks
     check:
-      type: file_exists | file_executable | file_contains | directory_exists | gitignore_entry
-      value: <string>                                           # supports {{variable_name}}; required for file_contains and gitignore_entry
+      type: file_exists | file_executable | file_contains | directory_exists | gitignore_entry | gitattributes_entry
+      value: <string>                                           # supports {{variable_name}}; required for file_contains, gitignore_entry, and gitattributes_entry
     condition:                                                  # optional — skip artefact if condition is false
       type: config_equals | scan_frontmatter
       # config_equals: check a config.yaml field
@@ -155,6 +155,7 @@ For each entry in the `artefacts` block:
 4. **Scaffold.** If the check fails:
    - `type: file` — write the template (with variable substitution) to `path`. After writing: if `check.type` is `file_executable`, set executable permission (`chmod +x` on Unix). On Windows, note that executable permission does not apply but git will invoke the hook via its bundled bash regardless.
    - `type: gitignore_entry` — append the resolved `check.value` to `.gitignore` if not present.
+   - `type: gitattributes_entry` — append the resolved `check.value` to `.gitattributes` if not present.
    - `type: directory` — create the directory at `path` if absent.
 5. **Report.** Include scaffolded artefacts in the Step 5 summary.
 
