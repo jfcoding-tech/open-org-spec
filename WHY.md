@@ -4,33 +4,46 @@
 
 ---
 
-## 1. What a second brain is
+## The problem is not documentation
 
-A system outside your head that captures, organises, and surfaces what you'd otherwise forget or keep in private notes. Working memory stays free for thinking, not remembering.
+Most organisations have more documentation than anyone can read. Confluence pages, slide decks, recorded meetings, email threads with thirty-six messages and no clear owner.
 
-The personal version is well known. What's less obvious is what happens when an organisation has one.
+That is not the problem. The problem is **legibility** — the difference between information that exists somewhere and information that is findable, current, relevant, and actionable by the right person at the right time.
 
----
+An unlegible organisation runs on knowledge that lives in people's heads. Decisions get made in meetings and evaporate. A new joiner can't understand how the org works without scheduling a week of calls. The same cross-functional disagreement happens three times because nobody can find the resolution from the first two. When something breaks, the person who gets called isn't the one who was involved — it's the one who happens to remember.
 
-## 2. Why most organisations don't have one
-
-Decisions live in someone's head, or in an email thread, or in a slide deck no one re-reads. New people can't catch up without scheduling calls. The same conversation happens three times because no one remembers the first two. AI tools can't help, because the context they need is locked in DMs, drives, and pasted screenshots.
-
-The result: organisations operate from individual memory, not shared memory. Coordination cost grows with headcount.
+This is not a people problem. It is a design problem. The knowledge that governs the organisation is invisible. It cannot be queried. It cannot be challenged. It cannot survive the people who carry it.
 
 ---
 
-## 3. From personal to organisational
+## What legibility is
 
-Now imagine a second brain that isn't yours — it's the organisation's. Everyone contributes. Everyone reads.
+A legible organisation has written itself down. Not exhaustively — that's the documentation trap. Precisely: the things that actually govern how work gets done.
 
-Missions, decisions, projects, feedback, governance — one place, plain markdown, version-controlled. The knowledge is in the system, not in any one person.
+Who owns this decision. What scope it covers. What was ruled out and why. Where the boundary is between this team and the next. What the current priorities are and what they're connected to.
 
-When that person leaves, or joins, or goes on holiday, the organisation doesn't lose a week catching up.
+Plain text. Version-controlled. Findable by anyone. Current because someone owns it.
+
+That is the surface. It doesn't have to be complete to be useful. It compounds as it grows — each unit of specification makes the existing ones more valuable. Start with one scope, one owner, one decision. The system teaches you what to specify next.
 
 ---
 
-## 4. What it looks like in practice
+## What becomes observable
+
+Once the organisation is specified, six things become visible that weren't before:
+
+- Who is accountable for what — by name, not by title
+- Which decisions are open and how long they have been
+- What is stale, unowned, or contradicting something else
+- Where boundaries are being crossed before damage is done
+- What the organisation is producing against what it decided to produce
+- Where a change needs to go and who needs to know about it
+
+Without the specification, none of this is observable. The leader is back to walking the org manually — meetings, conversations, asking around. You can only observe thinking if the thinking is recorded.
+
+---
+
+## What it looks like in practice
 
 Not a description. A walk through the surface.
 
@@ -44,16 +57,16 @@ projects/pricing-model-v2/
     2026-03-12-drop-annual-tier.md
 ```
 
-Anyone who wants to know where things stand reads `updates.md`. No Slack ping, no assembled deck, no meeting.
+Anyone who wants to know where things stand reads `updates.md`. No Slack ping, no assembled deck, no meeting scheduled to get context.
 
 **A cross-functional disagreement resolved in writing.**
 
 ```
-ai-factory/feedback.md
+growth/feedback.md
 
 ## 2026-04-24 | Rag → Alex — Ownership gap: attribution logic
 
-[Rag] Attribution is failing for edge cases in the B2B path.
+Attribution is failing for edge cases in the B2B path.
 This needs a decision before the Q2 release.
 
 → Alex
@@ -62,10 +75,20 @@ This needs a decision before the Q2 release.
 
 ## 2026-04-26 | Alex → Rag — Re: attribution logic [resolved]
 
-Decision: B2B attribution follows the simplified rule in decisions/2026-04-26-b2b-attribution.md.
+Decision: B2B attribution follows the rule in
+decisions/2026-04-26-b2b-attribution.md.
 ```
 
-Five days. Three contributors. No meeting. The resolution is findable forever — not in someone's inbox.
+Four days. Two people. No meeting. The resolution is findable forever — not in someone's inbox.
+
+**A decision that answers a question nobody asked yet.**
+
+```
+decisions/
+  2025-11-14-no-custom-auth-providers.md
+```
+
+A new engineer joins eight months later. Before writing a line of code she checks the system. The architectural decision is there — what was considered, what was ruled out, why. She doesn't reinvent the reasoning. She builds on it or proposes to change it with a counter-argument.
 
 **A role spec so the next person mirrors the pattern.**
 
@@ -75,55 +98,41 @@ clusters/growth/cross-cluster-coordinator.md
 **Owner:** Jamie Park
 **Function:** Driver
 
-Responsible for coordinating demand signals across clusters before
-the monthly planning cycle. Feeds into ai-factory/inbox.md by the
-25th of each month.
+Responsible for coordinating demand signals across clusters
+before the monthly planning cycle.
 ```
 
-When Jamie moves on, the next person doesn't start from scratch. The pattern is written down.
-
-**A returning contributor oriented in seconds.**
-
-```
-$ /catchup
-
-Last active: 12 days ago.
-Since then: 3 decisions merged, 2 projects moved to in-progress,
-1 feedback entry addressed to you in clusters/growth/feedback.md.
-
-Top priority: decisions/2026-05-01-pricing-model-approved.md needs
-your acknowledgement before implementation begins.
-```
-
-No reading every diff. No pinging someone to ask what changed.
+When Jamie moves on, the next person doesn't start from scratch.
 
 ---
 
-## 5. Why now — and why AI makes this leverage
+## Why AI makes this urgent
 
-An organisational second brain is useful for humans alone. With AI, it becomes leverage.
+Everything above was possible before AI. What has changed is the economics — and the stakes.
 
-An agent operating on a well-structured repo can:
-- Orient a returning contributor in seconds
-- Draft a spec for an owner's review rather than starting from a blank page
-- Check whether a proposal conforms to governance automatically
-- Surface stale decisions and non-conformant specs before they compound
+AI operates on context. When the context is in the system — decisions recorded, owners declared, scopes defined — AI can run an analysis in twenty minutes that used to take a day. The cross-project risk analysis becomes a query, not a synthesis.
 
-*The person thinks. The agent checks.* That math only works if the knowledge lives in the system, not in someone's head.
+But the inverse is also true. Without a legible organisation, AI generates volume without intelligence. More output. Faster delivery. In whatever direction you were already pointing. The feedback loop that would have slowed you down — the friction, the rework, the visible failure — gets suppressed. By the time the impact surfaces, you are much further in the wrong direction.
 
-The more the organisation writes down, the more useful the agent becomes. The more useful the agent becomes, the more the organisation writes down.
+The legible organisation is the synthesis layer. The spec is what gives AI enough to work with. Without it, AI doesn't make the organisation smarter. It makes it louder.
 
 ---
 
-## What open-org-spec is
+## The primitives argument
 
-A lightweight standard for building this kind of surface. It defines the conventions — where things live, what they look like, how decisions are recorded — so that:
+An organisation's governance is not a monolith. It is built from foundational elements — how decisions are made, how roles are declared, how feedback flows, how projects are tracked.
 
-1. Any contributor can navigate without a guide
-2. Any AI agent can operate without bespoke instructions
-3. Any organisation can adopt it without starting from scratch
+When those elements are written down and inherited by the scopes that depend on them, something changes. Change a foundational element and the update propagates through every scope built on top of it. Governance becomes explicit — lower scopes can add but not contradict; contradictions surface before they compound.
 
-The standard is deliberately minimal and fog-of-war. You activate one convention when a real use case demands it, not the whole framework upfront. Start with one folder. Let it grow.
+The open-org-spec capabilities are those foundational elements. Not a framework to adopt in full — primitives to activate one at a time, as the use case demands.
+
+---
+
+## Where to start
+
+Find the decision that is governing your organisation but has never been written down. Write it down. Give it an owner. Make it findable.
+
+That is the first unit of legibility. Everything compounds from there.
 
 → [`GUIDE.md`](./GUIDE.md) for how to get started.
 → [`README.md`](./README.md) for the technical overview.
