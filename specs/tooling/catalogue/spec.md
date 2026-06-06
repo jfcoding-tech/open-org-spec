@@ -29,12 +29,14 @@ governance/catalogue/
   decisions.yaml          ◄── one entry per decision record
   feedback-inboxes.yaml   ◄── one entry per feedback.md
   projects.yaml           ◄── one entry per project
+  <capability>.yaml       ◄── capability-declared types (present only when that capability is active)
 ```
 
 - **`index.yaml`** is the discovery manifest. It lists every sub-catalogue, its relative path, the count of entries it holds, and the timestamp at which it was last generated. A consumer reads `index.yaml` first to discover what sub-catalogues exist and how fresh each is.
 - **Sub-files** each hold the entries for one artefact type. A tool that needs only one type (e.g. decision-escalation needs only decisions) reads that sub-file directly and skips the rest. A tool that needs everything reads `index.yaml` and follows it to each sub-file.
+- **Capability-declared sub-files** extend the catalogue without modifying the base agent. Each active capability that contributes to the catalogue declares a `## Catalogue` section in its spec, naming its sub-file, walk pattern, classification rule, and entry shape. The catalogue agent reads active capabilities from the adoption manifest and adds their types to the walk automatically.
 
-This split keeps the read cost proportional to the consumer's need: a single-type consumer never pays to parse the whole repo's projection.
+This split keeps the read cost proportional to the consumer's need: a single-type consumer never pays to parse the whole repo's projection. Activating a capability automatically extends the catalogue — no agent changes needed.
 
 ### `index.yaml` shape
 
@@ -66,7 +68,11 @@ sub_catalogues:
 
 Before any write, verify the repo is in a state safe to write to. On a transient failure (a write conflict, a push that fails because the branch diverged, a network error), re-attempt rather than waiting for the next scheduled window. The maximum number of attempts is adopter-declared (default 3); on exhaustion, record the failure in the adopter-declared failure log and stop.
 
-### Step 2 — Walk governed spec paths
+### Step 2 — Discover capability-declared types
+
+Read the adoption manifest (`.open-org-spec/config.yaml`). For each capability with `status: active`, look up its canonical spec (`open-org-spec/specs/<capability>/spec.md`). If the spec contains a `## Catalogue` section, record the capability's declared sub-file name, walk pattern, classification rule, and entry shape. These capability types are added to the walk in Step 2a alongside the standard types.
+
+### Step 2a — Walk governed spec paths
 
 Walk all adopter-declared spec paths. For each file found, classify by type:
 
@@ -75,6 +81,7 @@ Walk all adopter-declared spec paths. For each file found, classify by type:
 - `feedback` — files named `feedback.md` → `feedback-inboxes.yaml`
 - `project` — files under `projects/` folders → `projects.yaml`
 - `module` — cluster or factory-level README or top-level spec → `specs.yaml`
+- `<capability type>` — files matching a capability's declared walk pattern → `<capability>.yaml` (one per active capability with a `## Catalogue` section, per Step 2)
 
 ### Step 3 — Extract spec fields
 

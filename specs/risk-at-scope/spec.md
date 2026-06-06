@@ -97,9 +97,32 @@ A project cannot close while it carries live risks. **All risks in a closing pro
 
 This is enforced as part of the [`project`](../project/spec.md) close flow: the closing audit walks the project's `risks/` folder, and any non-terminal risk is a gap that must be resolved before close. The risk registry excludes `projects/closed/` precisely because a closed project's risks are guaranteed terminal.
 
+## Scope configuration
+
+Each scope that tracks risks may place an optional `risks/README.md` at its `risks/` folder root. This file is the scope-level configuration surface for the capability — owned by the scope owner, not the manifest owner.
+
+Recognised frontmatter field:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `escalation_threshold_default` | Integer (days) | Suggested default offered by `/new-risk` when creating a risk at this scope. Not a system-enforced value — each risk record declares its own `escalation_threshold` explicitly. |
+
+`risks/README.md` is excluded from the risk record walk — it is a configuration file, not a risk (it carries no `id` field). It may also carry human-readable notes about conventions or contacts for the scope's risks.
+
+Example:
+
+```markdown
+---
+escalation_threshold_default: 14
+---
+
+# Risks — Product Development
+
+Fast-moving scope; 14-day default escalation window.
+```
+
 ## Extension points
 
-- **`escalation_threshold` default.** The capability requires the field but does not fix a default. Adopters set a scope-wide or repo-wide default (e.g. 30 days) in their extension spec; [`/new-risk`](./new.md) offers it as the suggested value while letting the author override per risk.
 - **RAG derivation thresholds.** The `50%` AMBER boundary and the `100%` RED boundary are defaults. Adopters may declare different fractions in their extension spec (e.g. AMBER at 60%), provided the ordering holds (`GREEN < AMBER < RED` by age) and the derivation stays a pure function of `status`, age, and `escalation_threshold`. Replacing derivation with a manually declared `rag` is not authorised by the override — the contract that RAG is derived does not change.
 - **Risk ID prefix.** `R-` is the default prefix for the `id` field. Adopters may declare a different prefix in their extension spec (e.g. `RISK-`), provided it is consistent across the registry's aggregation scope and the registry's next-ID suggestion uses it.
 
@@ -144,6 +167,52 @@ key_metrics:
 **Risk scanner agent** (`scanner.md`) — scans the registry for risks that have breached their `escalation_threshold` and routes a disposition request to each owner's scope `feedback.md` using the standard disposition frame. Runs daily alongside the registry agent.
 
 Both agents are Case B standard capability agents (no project spec required — the spec is this document).
+
+## Catalogue
+
+Contributed to the split catalogue when this capability is `status: active` in the adopter manifest. The catalogue agent reads this section to know how to walk and extract risk records into `risks.yaml`.
+
+**Sub-file:** `risks.yaml`
+
+**Walk:**
+- `<scope>/risks/*.md` across all scopes in the adopter-declared scope tree
+- `risks/*.md` at the repo root (programme-level cross-cutting risks)
+- Explicitly exclude `projects/closed/*/risks/` — closed project risks are terminal by contract
+- Exclude `risks/README.md` at any scope — scope configuration file, not a risk record
+
+**Classify as risk record if:** the file's YAML frontmatter contains an `id` field. Files without `id` (README, TEMPLATE, etc.) are silently skipped.
+
+**Extract per record:**
+
+| Field | Source | Notes |
+|---|---|---|
+| `path` | Relative path from repo root | |
+| `scope` | Inferred from path | e.g. `clusters/product-development`, `ai-factory`, `root` |
+| `id` | `id` frontmatter field | |
+| `title` | `title` frontmatter field | |
+| `created_at` | `created_at` frontmatter field | |
+| `rag` | `rag` frontmatter field | Cached snapshot — not recomputed by the catalogue agent |
+| `owner` | `owner` frontmatter field | Normalised to a list (single name or multiple) |
+| `status` | `status` frontmatter field | |
+| `escalation_threshold` | `escalation_threshold` frontmatter field | Integer days; empty string if absent |
+
+**RAG note:** The `rag` value in the catalogue is copied from the file, not recomputed. The `generated:` timestamp in `index.yaml` is the validity boundary. Consumers needing current RAG should recompute from `created_at`, `status`, and `escalation_threshold`.
+
+**`risks.yaml` entry shape:**
+
+```yaml
+- path: <relative path from repo root>
+  scope: <scope name>
+  id: <R-NNN>
+  title: <string>
+  created_at: <YYYY-MM-DD>
+  rag: <RED | AMBER | GREEN | empty string>
+  owner: [<name>, ...]
+  status: <open | deferred | mitigated | accepted | closed>
+  escalation_threshold: <integer | empty string>
+```
+
+Missing fields are written as empty strings, not omitted.
 
 ## Invocation
 
