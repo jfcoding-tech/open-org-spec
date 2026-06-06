@@ -72,6 +72,55 @@ The check validates conformance to the `project` capability's schema, its [Gate 
 
 The check does **not** validate whether the named owner is the requester — that is human judgement per the capability's [Project initiation](../project/spec.md#project-initiation) rule and is outside v0 scope. A reviewer reading the report carries that question alongside the mechanical findings.
 
+#### Against `tooling`
+
+The tooling drift check detects self-contained commands whose embedded logic has diverged from the standard spec they were derived from. It runs when the `open-org-spec` submodule pointer is bumped and is **governance-gated**: only the manifest owner runs it.
+
+**Governance gate.** Read `owner.name` and `owner.email` from `.open-org-spec/config.yaml`. Compare against `git config user.name` and `git config user.email`. If the current contributor is not the declared manifest owner, emit no findings and output: `"Standard drift check is a governance task for <owner name>. No action needed from you."` Stop.
+
+**Discovery.** Scan the adopter's command directory for files containing `canonical_spec` in their frontmatter. Each such file is a self-contained command subject to drift checking. Commands without `canonical_spec` are adopter-authored and not checked.
+
+**Per-command drift check.** For each self-contained command:
+
+1. Read `canonical_spec` (path to the standard spec) and `canonical_spec_version` (the version tag at which the command was last synced).
+2. Run `git log <canonical_spec_version>..<current_submodule_tag> -- <canonical_spec_path>` inside the submodule to list commits that touched the canonical spec since the last sync.
+3. Classify the highest-severity commit in the range by its conventional commit prefix:
+   - `feat!` / `fix!` — **breaking**: execution logic or a security contract changed
+   - `feat` / `fix` — **additive**: new capability or bug fix
+   - `docs` / `chore` / `refactor` — **editorial**: no behaviour change
+4. Emit a finding based on severity:
+
+| Commit severity | Finding type | Meaning |
+|---|---|---|
+| breaking (`!`) | `violation` | Command must be updated before the submodule bump can land |
+| additive | `warning` | Command should be reviewed; may need updating |
+| editorial | — | No finding; `canonical_spec_version` is auto-advanced |
+
+5. If no commits touched the canonical spec in the range: no finding; `canonical_spec_version` is auto-advanced to the current submodule tag.
+
+**Auto-advance.** For commands with no drift or only editorial drift, `adhere-to tooling` advances `canonical_spec_version` to the current submodule tag as a mechanical fix. No owner confirmation required.
+
+**Blocking drift.** For commands with `violation` findings, the drift check writes a feedback entry to the manifest owner's governance inbox:
+
+```
+## YYYY-MM-DD | adherence-check tooling → <owner> — Drift detected: <command file>
+
+`<command file>` is derived from `<canonical_spec>` (last synced: <canonical_spec_version>).
+Breaking changes were introduced between <canonical_spec_version> and <current_tag>:
+
+  <list of breaking commits with their messages>
+
+Review the diff and update the command file before the submodule bump lands.
+
+→ <owner>
+```
+
+The submodule bump must not be pushed while `violation` findings remain open. The sentinel file `.open-org-spec/drift-check-pending` (gitignored, local only) blocks the push via a pre-push hook until all violations are resolved and `adhere-to tooling` has cleared the file.
+
+**Sentinel file lifecycle.** The `drift-check-pending` file is created by the submodule bump workflow and contains `from`, `to`, and `bumped_at` fields. `adhere-to tooling` reads it to determine the diff range. When all violations are resolved and all `canonical_spec_version` fields are advanced, `adhere-to tooling` deletes the file. The pre-push hook (owner-gated) blocks until the file is absent.
+
+**Scope.** This check only applies to commands that run in an automated context (scheduled or `--dangerously-skip-permissions`), as defined in [`../tooling/spec.md`](../tooling/spec.md#self-contained-commands). Interactive relays are not self-contained and are not subject to drift checking.
+
 ## What adherence-check is not
 
 - **A fix tool.** It reports; it does not mutate. Fixes are authored through the [`capability-lifecycle`](../capability-lifecycle/spec.md) workflow.
