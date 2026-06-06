@@ -1,17 +1,19 @@
-# Spec-Health: Observability Agent
+# Agent-metrics
 
 **Owner:** Javier Fernandez
 **Status:** Active
 
-Part of the [spec-health suite](../spec.md). Reads the suite's invocation log and failure log, computes proxy metrics for the week, and appends a structured weekly report to the adopter-declared report file.
+A standalone tooling capability. Agent-metrics measures the performance of **all** automated agents and commands in the repo — not just the spec-health suite. It reads the adopter-declared invocation log shared by every agent and command, computes per-agent metrics and a relative cost index, detects optimisation opportunities, and writes a weekly report.
 
 ## Purpose
 
-The spec-health suite is infrastructure. Infrastructure that cannot be measured cannot be justified or improved. The observability agent provides the evidence base for deciding whether to expand, maintain, or retire the catalogue and agent infrastructure — by tracking file-read counts as a proxy for token cost and surfacing failure rates and conformance gap counts week on week.
+Automated agents and instrumented commands are infrastructure. Infrastructure that cannot be measured cannot be justified or improved. Agent-metrics provides the evidence base for deciding whether to expand, maintain, or retire any agent or command — by tracking file-read counts as a proxy for token cost, surfacing failure and success rates, and computing a relative cost index across every agent and command that logs to the shared invocation log.
+
+Its scope is repo-wide: any agent or command that appends to the adopter-declared invocation log is measured. It is not limited to the spec-health suite — the conformance agent, the catalogue agent, decision-escalation, observability tools, catchup, and every instrumented command all appear in its report.
 
 ## Inputs
 
-- Invocation log path (extension point — the file all agents write to on each run)
+- Invocation log path (extension point — the file all agents and commands write to on each run)
 - Failure log path (extension point — the file all agents write to on max-retry exhaustion)
 - Report file path (extension point — where the weekly sections are appended)
 - Catalogue path (extension point — read to count specs with missing fields)
@@ -26,15 +28,15 @@ The spec-health suite is infrastructure. Infrastructure that cannot be measured 
 
 ### Step 1 — Read invocation log
 
-Read all entries in the adopter-declared invocation log for the last 7 days (entries where the date field falls within the current week window). Group by agent name.
+Read all entries in the adopter-declared invocation log for the last 7 days (entries where the date field falls within the current week window). Group by agent/command name. Every agent and command that logs to this file is in scope — there is no filter by suite.
 
 ### Step 2 — Compute per-agent metrics
 
-For each agent:
+For each agent or command:
 
 - Invocation count
 - Average `files_read`
-- Success count and failure count (from `outcome:` field)
+- Success count and failure count (from `outcome:` field) — the success rate is the fraction of `outcome: success` entries
 - `catalogue_assisted` ratio (entries with `catalogue_assisted: true` as a fraction of total)
 
 ### Step 3 — Read failure log
@@ -76,10 +78,10 @@ If fewer than 3 data points are available for the week, write the available data
 
 ### Step 7 — Log invocation
 
-Implements the observability contract per the [suite spec](../spec.md#observability-contract). Append one entry to the adopter-declared invocation log:
+Append one entry to the adopter-declared invocation log:
 
 ```
-YYYY-MM-DD HH:MM UTC | observability-agent | files_read: N | catalogue_assisted: true | outcome: success/fail
+YYYY-MM-DD HH:MM UTC | agent-metrics | files_read: N | catalogue_assisted: true | outcome: success/fail
 ```
 
 ### Step 8 — Contributor usage analysis
@@ -112,12 +114,12 @@ e. **Include in the weekly report.** Append a summary line to the weekly section
 For each command/agent in the last 7 days, compute a relative cost proxy:
 
 ```
-cost_index = avg_files_read × model_factor
+cost_index = model_factor × avg_files_read × invocation_count
 ```
 
 Model factors: `haiku = 0.267`, `sonnet = 1.0`, `opus = 3.75`. If model field is absent from log entries, assume `sonnet = 1.0`.
 
-Rank commands by `cost_index × invocation_count` (total weekly cost proxy). Express as a dimensionless index relative to the baseline (one Sonnet run reading 10 files = index 10.0).
+Rank commands by total weekly cost proxy. Express as a dimensionless index relative to the baseline (one Sonnet run reading 10 files = index 10.0).
 
 **Never express as dollars.** Always label: *"Relative cost proxy — not actual spend. Index 1.0 = one Sonnet run reading one file."*
 
@@ -166,13 +168,28 @@ Optimisation suggestions: N new | N resolved | N stale | N pending review — se
 
 If bootstrapping: `Optimisation detection: bootstrapping (N/14 days). Starts YYYY-MM-DD.`
 
-### Implements shared contracts
-
-This agent implements the retry contract and observability contract per the [suite spec](../spec.md#shared-contracts).
-
 ## Data contracts
 
 **Weekly report section format** (appended to the report file):
+
+The file must begin with a machine-readable YAML front-matter block:
+
+```yaml
+---
+generated: YYYY-MM-DDTHH:MM:00Z
+tool: agent-metrics
+period_days: 7
+key_metrics:
+  catalogue_assisted_invocations: N
+  estimated_token_saving_tokens: N
+  agent_failure_rate_pct: N.N
+  open_conformance_gaps: N
+  active_contributors: N
+  engagement_rate_pct: N.N
+---
+```
+
+Followed by the weekly section body:
 
 ```markdown
 ## Week of YYYY-MM-DD
@@ -185,21 +202,40 @@ This agent implements the retry contract and observability contract per the [sui
 - Open conformance gaps (from catalogue): N specs missing owner/status
 ```
 
-**Invocation log entry format** (per suite spec):
+**Contributor-usage output format** (written to the adopter-declared contributor usage output path):
+
+The file must begin with a machine-readable YAML front-matter block:
+
+```yaml
+---
+generated: YYYY-MM-DDTHH:MM:00Z
+tool: agent-metrics/contributor-usage
+period_days: 7
+key_metrics:
+  claude_active_users: N
+  claude_session_only_users: N
+  claude_inactive_users: N
+  engagement_rate_pct: N.N
+---
+```
+
+Followed by the three-tier contributor table (Active / Session only / No activity) as described in Step 8d.
+
+**Invocation log entry format:**
 
 ```
-YYYY-MM-DD HH:MM UTC | observability-agent | files_read: N | catalogue_assisted: true | outcome: success/fail
+YYYY-MM-DD HH:MM UTC | agent-metrics | files_read: N | catalogue_assisted: true | outcome: success/fail
 ```
 
 ## Dashboard
 
-An on-demand companion to the scheduled agent. The dashboard command (`/observability-dashboard`) reads the three observability files and the catalogue at any time and renders the current state as a formatted terminal summary. It does not write to the repo. The scheduled agent and the dashboard are complementary: the agent generates the weekly report; the dashboard surfaces the live picture between scheduled runs. See [`dashboard.md`](dashboard.md).
+An on-demand companion to the scheduled agent. The dashboard command (`/agent-metrics-dashboard`) reads the metrics files and the catalogue at any time and renders the current state as a formatted terminal summary. It does not write to the repo. The scheduled agent and the dashboard are complementary: the agent generates the weekly report; the dashboard surfaces the live picture between scheduled runs. See [`dashboard.md`](dashboard.md).
 
 ## Extension points
 
 | Extension point | Description | Default |
 |---|---|---|
-| Invocation log path | File all agents write to on each run | *(required)* |
+| Invocation log path | File all agents and commands write to on each run | *(required)* |
 | Failure log path | File all agents write to on max-retry exhaustion | *(required)* |
 | Report file path | Where weekly sections are appended | *(required)* |
 | Catalogue path | Read to count open conformance gaps | *(required)* |
@@ -212,13 +248,15 @@ An on-demand companion to the scheduled agent. The dashboard command (`/observab
 
 ## Rationale
 
-A file-read count is the lowest-friction proxy for token cost available from the invocation log format. It does not require the agent to instrument the actual model calls — contributors log `files_read` as a single integer. The default 45-file pre-catalogue baseline is a deliberate assumption: commands that walked 30–80 files before the catalogue existed motivate the figure. The assumption is replaced with a measured figure once four weeks of invocation-log data are available.
+A file-read count is the lowest-friction proxy for token cost available from the invocation log format. It does not require the tool to instrument the actual model calls — agents and commands log `files_read` as a single integer. The default 45-file pre-catalogue baseline is a deliberate assumption: commands that walked 30–80 files before the catalogue existed motivate the figure. The assumption is replaced with a measured figure once four weeks of invocation-log data are available.
+
+Measuring all agents and commands from one shared log — rather than scoping the measurement to a single suite — means the relative cost index is comparable across the whole repo. A spec-health agent and a contributor-facing command sit in the same ranking, so the adopter can see where token cost actually concentrates.
 
 ## Related
 
-- [`../spec.md`](../spec.md) — suite spec; shared contracts (scheduling, retry, observability)
-- [`../conformance/spec.md`](../conformance/spec.md) — one of the agents this agent monitors
-- [`../catalogue/spec.md`](../catalogue/spec.md) — one of the agents this agent monitors; produces the catalogue this agent reads
-- [`../decision-nudge/spec.md`](../decision-nudge/spec.md) — one of the agents this agent monitors
-- [`../implementations/README.md`](../implementations/README.md) — runtime contract
-- [`dashboard.md`](dashboard.md) — on-demand dashboard companion command
+- [`../spec.md`](../spec.md) — the tooling capability; delta mode and the universal invocation-log instrumentation requirement.
+- [`../catalogue/spec.md`](../catalogue/spec.md) — produces the catalogue this tool reads for open-gap counts; one of the agents this tool measures.
+- [`../spec-health/conformance/spec.md`](../spec-health/conformance/spec.md) — one of the agents this tool measures.
+- [`../../governance-at-scope/tools/decision-escalation/spec.md`](../../governance-at-scope/tools/decision-escalation/spec.md) — one of the agents this tool measures.
+- [`dashboard.md`](dashboard.md) — on-demand dashboard companion command.
+- [`review-optimisations.md`](review-optimisations.md) — interactive review of the optimisation suggestions this tool generates.

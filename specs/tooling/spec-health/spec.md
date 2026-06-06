@@ -3,22 +3,24 @@
 **Owner:** Javier Fernandez
 **Status:** Active
 
-A suite of coordinated agents that maintain the health of a spec-driven repository — conformance, data currency, stale-decision remediation, and value measurement. Each agent handles one concern; together they form a closed loop.
+A suite of coordinated agents that maintain the health of a spec-driven repository — conformance detection and catalogue currency. Each agent handles one concern; together they keep specs conformant and the catalogue fresh.
 
 ## Purpose
 
-A spec-driven repository drifts without active maintenance: required fields go missing, a central catalogue grows stale, proposed decisions remain unresolved, and nobody can tell whether the infrastructure is paying off. The spec-health suite addresses all four failure modes through agents that run on a schedule, write structured output to the repo, and report their own activity so the cost and value of the system is visible.
+A spec-driven repository drifts without active maintenance: required fields go missing and the central catalogue grows stale. The spec-health suite addresses these failure modes through agents that run on a schedule, write structured output to the repo, and report their own activity so the cost and value of the system is visible.
 
 The suite is designed for adoption: agent logic is written generically, and adopters declare their own paths, schedules, routing tables, and implementation in a wiring layer separate from the generic core.
+
+Two concerns that previously lived in this suite are now standalone capabilities and are no longer part of spec-health: stale-decision remediation moved to [`decision-escalation`](../../governance-at-scope/tools/decision-escalation/spec.md) under `governance-at-scope` tooling, and value measurement moved to [`agent-metrics`](../agent-metrics/spec.md) under the tooling capability (where it measures all agents and commands, not just this suite).
 
 ## Agents in the suite
 
 | Agent | Concern | When it runs |
 |---|---|---|
 | `conformance` | Detects specs missing required fields; nudges owners | Daily |
-| `catalogue` | Regenerates the adopter's spec catalogue from the repo state | Daily |
-| `decision-nudge` | Detects stale open decisions; nudges owners | Weekly |
-| `observability` | Reads invocation and failure logs; writes the weekly value report | Weekly |
+| `catalogue` | Regenerates the adopter's catalogue from the repo state | Daily |
+
+The `catalogue` agent is now a [standalone capability](../catalogue/spec.md). The spec-health suite depends on it — the conformance agent reads the catalogue rather than walking the filesystem — but it is governed and specified under `specs/tooling/catalogue/`, not within this suite. It is listed here because the suite schedules and sequences it alongside conformance.
 
 ## Outputs
 
@@ -27,42 +29,37 @@ All outputs written by the suite, in one place. Individual agent specs define th
 | Agent | Output | Location | When written |
 |---|---|---|---|
 | conformance | Nudge entry per non-conformant spec | `<scope>/feedback.md` (routed by scope) | Each non-conformant spec found |
-| catalogue | Full spec catalogue | adopter-declared catalogue path | Daily — full rewrite |
-| decision-nudge | Nudge entry per stale open decision | `<scope>/feedback.md` (routed by scope) | Each stale decision found |
-| observability | Weekly report section | adopter-declared report file | Weekly — appended, never overwritten |
+| catalogue | Full split catalogue (index + sub-files) | adopter-declared catalogue base path | Daily — full rewrite |
 | **all agents** | Invocation log entry | adopter-declared invocation log | Every run (success or failure) |
 | **all agents** | Failure log entry | adopter-declared failure log | Max-retry exhaustion only |
 
 ### Feedback inbox outputs (distributed)
 
-Conformance and decision-nudge write to whichever scope's `feedback.md` is relevant — not to a single file. The scope-to-feedback-inbox routing table each adopter declares defines the mapping. Example: a non-conformant spec under a cluster scope writes to that cluster's `feedback.md`.
+Conformance writes to whichever scope's `feedback.md` is relevant — not to a single file. The scope-to-feedback-inbox routing table each adopter declares defines the mapping. Example: a non-conformant spec under a cluster scope writes to that cluster's `feedback.md`.
 
 ```
 conformance ──► <scope-A>/feedback.md
             ──► <scope-B>/feedback.md
             ──► <scope-C>/feedback.md
             ──► ...
-
-decision-nudge ──► (same routing, driven by decision record's scope)
 ```
 
 ### Structured outputs (centralised)
 
 ```
-<adopter-declared catalogue path>          ◄── catalogue agent (daily rewrite)
+<adopter-declared catalogue base path>     ◄── catalogue agent (daily rewrite of index + sub-files)
 <adopter-declared invocation log path>     ◄── all agents (one line per run)
 <adopter-declared failure log path>        ◄── all agents (one line per exhaustion)
-<adopter-declared report file path>        ◄── observability agent (weekly append)
 ```
+
+The weekly value report is no longer a spec-health output — it is produced by [`agent-metrics`](../agent-metrics/spec.md), which reads the same invocation and failure logs.
 
 ## Dependency chain
 
 The agents are sequenced intentionally:
 
 1. **Conformance runs first** — detects gaps and nudges owners before the catalogue snapshot is taken. Same-day fixes by contributors are captured in the catalogue run.
-2. **Catalogue runs second** — regenerates the adopter's spec catalogue after any fixes from step 1.
-3. **Decision-nudge runs third** — scans decision records independently; shares the retry topology but does not depend on conformance or catalogue output.
-4. **Observability runs last** — reads the invocation log and the catalogue produced by all prior agents on the same day.
+2. **Catalogue runs second** — regenerates the adopter's catalogue after any fixes from step 1. The catalogue is a [standalone capability](../catalogue/spec.md); the suite schedules it after conformance so the day's snapshot reflects same-day fixes.
 
 ### Daily schedule
 
@@ -78,38 +75,17 @@ The agents are sequenced intentionally:
               ▼
        ┌──────────────────────┐
        │ adopter catalogue    │
-       │ file                 │
+       │ (index + sub-files)  │
        └──────────────────────┘
 ```
 
-### Weekly additions
-
-```
-       ┌───────────────┐  nudges    ┌───────────────┐
-       │ decision-nudge│───────────►│ feedback.md   │
-       └───────────────┘            │ (per scope)   │
-                                    └───────────────┘
-
-       ┌───────────────┐  reads     ┌──────────────────────────────────────────┐
-       │ observability │───────────►│ adopter invocation log                   │
-       └───────┬───────┘            │ adopter failure log                      │
-               │        reads       │ adopter catalogue file                   │
-               │────────────────────│                                          │
-               │                    └──────────────────────────────────────────┘
-               │ writes
-               ▼
-       ┌──────────────────────────────────────────┐
-       │ adopter report file                       │
-       └──────────────────────────────────────────┘
-```
+The stale-decision and value-measurement steps that previously ran on a weekly cadence are now external: [`decision-escalation`](../../governance-at-scope/tools/decision-escalation/spec.md) routes disposition requests for stale decisions, and [`agent-metrics`](../agent-metrics/spec.md) reads the invocation and failure logs to write the weekly value report. Both run on their own schedule, declared by the adopter where those capabilities are activated — not by this suite.
 
 ### Invocation log (all agents, every run)
 
 ```
 conformance ──┐
-catalogue   ──┼──► adopter invocation log
-decision-nudge┤
-observability ┘
+catalogue   ──┴──► adopter invocation log
 
 on exhaustion:
 any agent ────────► adopter failure log
@@ -190,12 +166,10 @@ Adopters declare the following values when activating this capability:
 |---|---|---|
 | Invocation log path | Where all agents append their per-run entry | *(required)* |
 | Failure log path | Where all agents append on max-retry exhaustion | *(required)* |
-| Catalogue path | The spec catalogue file agents read and write | *(required)* |
+| Catalogue base path | The catalogue index and sub-files agents read and write | *(required)* |
 | Max retry attempts | Maximum attempts per agent run before failure is recorded | 3 |
 | Conformance schedule | When the conformance agent fires | Daily |
 | Catalogue schedule | When the catalogue agent fires | Daily, after conformance |
-| Decision-nudge schedule | When the decision-nudge agent fires | Weekly |
-| Observability schedule | When the observability agent fires | Weekly, after decision-nudge |
 
 Each agent capability spec defines its own additional extension points (paths, thresholds, vocabularies, routing tables).
 
@@ -215,8 +189,6 @@ config.yaml
 │     agents:                      │
 │       conformance:  "0 6 * * *"  │
 │       catalogue:    "0 7 * * *"  │
-│       decision-nudge:"0 22 * * 0" │
-│       observability:"0 10 * * 1" │
 └──────────────┬───────────────────┘
                │
                ▼
@@ -229,7 +201,7 @@ config.yaml
     claude-code?           github-actions?
                │               │
                ▼               ▼
-        CronCreate × 4    check approver
+        CronCreate × 2    check approver
         (one per agent,   against governance
          at declared         │
          schedule)      ┌────┴─────┐
@@ -258,9 +230,9 @@ Two implementations are provided under `implementations/`:
 
 A custom implementation must satisfy all three shared contracts above. See [`implementations/README.md`](implementations/README.md) for the runtime contract and a checklist for custom implementations.
 
-### Observability activation implies universal instrumentation
+### Agent-metrics activation implies universal instrumentation
 
-When the observability agent is active, **all commands in the adopter's command directory must include a log-invocation step.** Partial instrumentation produces a skewed baseline and a false picture of system value.
+When [`agent-metrics`](../agent-metrics/spec.md) is active, **all commands in the adopter's command directory must include a log-invocation step.** Partial instrumentation produces a skewed baseline and a false picture of system value. This is an agent-metrics concern rather than a spec-health one — the suite documents it here because the spec-health agents are among the agents agent-metrics measures, and the activate command performs the instrumentation pass.
 
 The activate command enforces this automatically:
 
@@ -320,9 +292,9 @@ The `merge=union` strategy keeps all lines from both sides of a conflict — cor
 
 - [`activate.md`](activate.md) — the `/spec-health-activate` command that wires the suite from `config.yaml`
 - [`conformance/spec.md`](conformance/spec.md) — conformance agent capability spec
-- [`catalogue/spec.md`](catalogue/spec.md) — catalogue agent capability spec
-- [`decision-nudge/spec.md`](decision-nudge/spec.md) — decision-nudge agent capability spec
-- [`observability/spec.md`](observability/spec.md) — observability agent capability spec
+- [`../catalogue/spec.md`](../catalogue/spec.md) — catalogue capability spec (standalone; the suite depends on it)
+- [`../../governance-at-scope/tools/decision-escalation/spec.md`](../../governance-at-scope/tools/decision-escalation/spec.md) — stale-decision remediation, formerly `decision-nudge`; now a governance-at-scope tool
+- [`../agent-metrics/spec.md`](../agent-metrics/spec.md) — repo-wide value measurement, formerly the observability agent; now a standalone tooling capability
 - [`implementations/README.md`](implementations/README.md) — runtime contract; pick an implementation or declare a custom one
 - [`implementations/claude-code/spec.md`](implementations/claude-code/spec.md) — Claude Code runtime implementation
 - [`implementations/github-actions/spec.md`](implementations/github-actions/spec.md) — GitHub Actions runtime implementation

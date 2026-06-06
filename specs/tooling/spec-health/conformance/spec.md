@@ -19,7 +19,7 @@ Specs drift from required structure over time. Contributors author content under
 
 ### Execution optimisations
 
-**Delta mode (fast-path for subsequent runs).** Before walking all governed specs, read the adopter's invocation log and find the timestamp of the last successful conformance-agent run. Use `git log --since="<timestamp>" --name-only` filtered to governed spec paths to build a reduced file list. Only walk specs that changed since that run, plus any spec with no prior conformance record. On the very first run, or if the log is absent, fall back to a full walk.
+**Delta mode (fast-path for subsequent runs).** Before walking all governed specs, read the adopter's invocation log and find the timestamp of the last successful conformance run. Use `git log --since="<timestamp>" --name-only` filtered to governed spec paths to build a reduced file list. Only walk specs that changed since that run, plus any spec with no prior conformance record. On the very first run, or if the log is absent, fall back to a full walk.
 
 **Parallel scope execution.** Steps 2–4 (walk, check, dedup) are independent per governed scope. Implementations SHOULD process each scope as a separate subagent running concurrently. Step 5 (write nudge entries) runs after all scope subagents complete, serially, to avoid concurrent writes to shared feedback.md files.
 
@@ -53,9 +53,9 @@ Before writing a nudge, check whether the target feedback inbox already contains
 For each non-conformant spec that passes the dedup check, append a nudge entry to the scope's feedback inbox:
 
 ```
-## YYYY-MM-DD | conformance-agent → <owner> — Non-conformant spec: <path>
+## YYYY-MM-DD | conformance → <owner> — Non-conformant spec: <path>
 
-[conformance-agent] `<path>` is missing required field(s): <field list>.
+[conformance] `<path>` is missing required field(s): <field list>.
 These fields are required by the `<capability>` capability. Please add them.
 
 → <owner>
@@ -70,7 +70,7 @@ If the target feedback inbox does not exist, create it with a minimal two-line h
 Implements the observability contract per the [suite spec](../spec.md#observability-contract). Append one entry to the adopter-declared invocation log:
 
 ```
-YYYY-MM-DD HH:MM UTC | conformance-agent | files_read: N | catalogue_assisted: true | outcome: success/fail
+YYYY-MM-DD HH:MM UTC | conformance | files_read: N | catalogue_assisted: true | outcome: success/fail
 ```
 
 `catalogue_assisted: true` when the active capability source is the catalogue rather than raw filesystem walking.
@@ -84,9 +84,9 @@ This agent implements the retry contract and observability contract per the [sui
 **Nudge entry format** (written to feedback inbox):
 
 ```
-## YYYY-MM-DD | conformance-agent → <owner> — Non-conformant spec: <path>
+## YYYY-MM-DD | conformance → <owner> — Non-conformant spec: <path>
 
-[conformance-agent] `<path>` is missing required field(s): <field list>.
+[conformance] `<path>` is missing required field(s): <field list>.
 These fields are required by the `<capability>` capability. Please add them.
 
 → <owner>
@@ -97,7 +97,7 @@ These fields are required by the `<capability>` capability. Please add them.
 **Invocation log entry format** (per suite spec):
 
 ```
-YYYY-MM-DD HH:MM UTC | conformance-agent | files_read: N | catalogue_assisted: true/false | outcome: success/fail
+YYYY-MM-DD HH:MM UTC | conformance | files_read: N | catalogue_assisted: true/false | outcome: success/fail
 ```
 
 ## Extension points
@@ -117,5 +117,5 @@ Conformance nudges written into the feedback inbox the owner already reads requi
 ## Related
 
 - [`../spec.md`](../spec.md) — suite spec; shared contracts (scheduling, retry, observability)
-- [`../catalogue/spec.md`](../catalogue/spec.md) — runs after this agent; captures same-day fixes
+- [`../../catalogue/spec.md`](../../catalogue/spec.md) — catalogue capability; runs after this agent and captures same-day fixes; this agent reads its `specs.yaml` fast-path
 - [`../implementations/README.md`](../implementations/README.md) — runtime contract

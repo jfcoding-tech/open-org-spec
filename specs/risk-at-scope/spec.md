@@ -120,6 +120,30 @@ Three choices shaped this capability:
 
 3. **Risks don't reopen.** Allowing a terminal risk back to `open` would corrupt both the historical record (one file, one concern, one life) and the age-based RAG (a stale risk could be reset). Creating a new risk when a concern resurfaces costs almost nothing and keeps every record trustworthy.
 
+## Automated tooling (forthcoming)
+
+Two agents are defined by this capability but not yet specced. They are tracked in the standard's backlog and will be added as separate files in this directory when their design is stable.
+
+**Risk registry agent** (`registry.md`) — walks all `risks/` folders across governed scopes (excluding `projects/closed/`), aggregates all risk records into a machine-readable registry file, and writes a delta log of what changed since the previous run. Runs daily, delta-based (see backlog B-004). Produces:
+
+```yaml
+---
+generated: YYYY-MM-DDTHH:MM:00Z
+tool: risk-registry
+period_days: 1
+key_metrics:
+  open_risks: N
+  red_risks: N
+  amber_risks: N
+  unowned_risks: N
+  awaiting_disposition: N
+---
+```
+
+**Risk scanner agent** (`scanner.md`) — scans the registry for risks that have breached their `escalation_threshold` and routes a disposition request to each owner's scope `feedback.md` using the standard disposition frame. Runs daily alongside the registry agent.
+
+Both agents are Case B standard capability agents (no project spec required — the spec is this document).
+
 ## Invocation
 
 See [`new.md`](./new.md) for the `/new-risk` command that scaffolds a new risk record.

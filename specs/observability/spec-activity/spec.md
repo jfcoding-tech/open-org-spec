@@ -1,10 +1,10 @@
-# Spec-touch
+# Spec-activity
 
 A tool of the open-org-spec observability capability. Aggregates per-spec edit history: how many distinct people have edited each spec over the rolling window, and how many edits in total. Distinguishes *lived-in* specs (multiple editors, recurring edits) from *write-once-and-forget* specs (one author, untouched). The diagnostic for surface-area adoption.
 
 **Status:** Draft (0.1.0)
 **Type:** Command
-**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/spec-touch.md`), with an extension at `.open-org-spec/extensions/observability/spec-touch/spec.md`.
+**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/spec-activity.md`), with an extension at `.open-org-spec/extensions/observability/spec-activity/spec.md`.
 
 ## Purpose
 
@@ -54,7 +54,16 @@ For each top-level scope folder:
 
 ### Step 4 — Render
 
-Cached markdown file with:
+Cached markdown file. The output file must begin with a machine-readable YAML front-matter block containing these key metrics, followed by the prose body.
+
+```yaml
+key_metrics:
+  collective_ownership_pct: N.N
+  abandoned_count: N
+  total_specs: N
+```
+
+The file contains:
 
 1. **Generation header.**
 2. **Summary** — total specs, per-bucket counts, repo-wide lived-in-ratio (lived-in / total).
@@ -86,14 +95,14 @@ Cached markdown file with:
 
 ## Rationale
 
-Adoption of a spec-driven repository isn't measured by file count; it's measured by lived-in-ness. The most diagnostic failure mode is the repo that accumulates specs no-one re-reads — counts go up, decisions migrate to side channels anyway, and the surface becomes a write-only archive. This tool surfaces that pattern at file granularity, aggregated to scope. Combined with [`contributor-activity`](../contributor-activity/spec.md) (the *who*) and [`inbox-load`](../inbox-load/spec.md) (the *response*), it completes the adoption picture.
+Adoption of a spec-driven repository isn't measured by file count; it's measured by lived-in-ness. The most diagnostic failure mode is the repo that accumulates specs no-one re-reads — counts go up, decisions migrate to side channels anyway, and the surface becomes a write-only archive. This tool surfaces that pattern at file granularity, aggregated to scope. Combined with [`contributor-activity`](../contributor-activity/spec.md) (the *who*) and [`inbox-health`](../inbox-health/spec.md) (the *response*), it completes the adoption picture.
 
 ## Adoption
 
-Adopters activate `spec-touch` by declaring `capabilities.observability.tool_extensions.spec-touch` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/spec-touch/spec.md`.
+Adopters activate `spec-activity` by declaring `capabilities.observability.tool_extensions.spec-activity` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/spec-activity/spec.md`.
 
 ## Related
 
 - [`../spec.md`](../spec.md) — parent observability capability.
 - [`../contributor-activity/spec.md`](../contributor-activity/spec.md) — sibling tool, the per-author view of the same activity.
-- [`../owner-load/spec.md`](../owner-load/spec.md) — sibling tool; cross-reference for ownership context.
+- [`../owner-health/spec.md`](../owner-health/spec.md) — sibling tool; cross-reference for ownership context.

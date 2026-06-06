@@ -175,7 +175,7 @@ The submodule bump must not be pushed while `violation` findings remain open. Th
 
 **Sentinel file lifecycle.** The `drift-check-pending` file is created by the submodule bump workflow and contains `from`, `to`, and `bumped_at` fields. `adhere-to tooling` reads it to determine the diff range. When all violations are resolved and all `canonical_spec_version` fields are advanced, `adhere-to tooling` deletes the file. The pre-push hook (owner-gated) blocks until the file is absent.
 
-**Scope.** This check only applies to commands that run in an automated context (scheduled or `--dangerously-skip-permissions`), as defined in [`../tooling/spec.md`](../tooling/spec.md#self-contained-commands). Interactive relays are not self-contained and are not subject to drift checking.
+**Scope.** This check only applies to commands that run in an automated context (scheduled or `--dangerously-skip-permissions`), as defined in [`../tooling/spec.md`](../tooling/spec.md#self-contained-commands). Interactive relays are not self-contained and are not subject to drift checking. The scheduled agents typically in scope are the spec-health `conformance` and `catalogue` agents, the `decision-escalation` governance tool, and the `agent-metrics` weekly value agent — each derived from a standard spec via `canonical_spec`. (The drift check tracks these against their current canonical specs; `agent-metrics` replaces the former observability agent as the value-measurement spec a self-contained command derives from.)
 
 #### Against risk-at-scope
 

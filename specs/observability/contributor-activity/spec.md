@@ -48,7 +48,16 @@ Surface unresolved or ambiguously-resolved identities in a data-quality appendix
 
 ### Step 4 — Render
 
-Cached markdown file with:
+Cached markdown file. The output file must begin with a machine-readable YAML front-matter block containing these key metrics, followed by the prose body.
+
+```yaml
+key_metrics:
+  git_active_contributors: N
+  first_time_contributors: N
+  inactive_contributors: N
+```
+
+The file contains:
 
 1. **Generation header.**
 2. **Summary** — total distinct authors in window, count of first-time-contributors in window, median weekly active count, busiest week.
@@ -90,4 +99,4 @@ Adopters activate `contributor-activity` by declaring `capabilities.observabilit
 
 - [`../spec.md`](../spec.md) — parent observability capability.
 - [`../../people/spec.md`](../../people/spec.md) — people-resolution dependency.
-- [`../spec-touch/spec.md`](../spec-touch/spec.md) — sibling tool, the per-spec view of the same activity.
+- [`../spec-activity/spec.md`](../spec-activity/spec.md) — sibling tool, the per-spec view of the same activity.

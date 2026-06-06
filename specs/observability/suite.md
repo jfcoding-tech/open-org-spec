@@ -23,11 +23,11 @@ The five standard observability tools run sequentially in a single automated exe
 
 | Tool | What it produces |
 |---|---|
-| `/owner-load` | Who owns what across all scopes |
-| `/inbox-load` | Open feedback inbox state across all scopes |
-| `/decision-flow` | Decision record health and linkage |
+| `/owner-health` | Who owns what across all scopes |
+| `/inbox-health` | Open feedback inbox state across all scopes |
+| `/decision-health` | Decision record health and linkage |
 | `/contributor-activity` | Contributor engagement over time |
-| `/spec-touch` | Which specs are lived-in vs. abandoned |
+| `/spec-activity` | Which specs are lived-in vs. abandoned |
 
 All tools write to the adopter's declared observability output path. One execution = one commit with all five outputs refreshed.
 

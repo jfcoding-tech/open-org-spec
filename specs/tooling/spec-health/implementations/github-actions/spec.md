@@ -17,8 +17,8 @@ Per-agent workflow files:
 |---|---|---|
 | conformance | `.github/workflows/spec-health-conformance.yml` | adopter-declared conformance schedule |
 | catalogue | `.github/workflows/spec-health-catalogue.yml` | adopter-declared catalogue schedule |
-| decision-nudge | `.github/workflows/spec-health-decision-nudge.yml` | adopter-declared decision-nudge schedule |
-| observability | `.github/workflows/spec-health-observability.yml` | adopter-declared observability schedule |
+
+The `decision-escalation` and `agent-metrics` agents are no longer part of this suite (they moved to `governance-at-scope` tooling and the tooling capability respectively). Adopters who run them via GitHub Actions wire their workflows from those capabilities' own implementations, not here.
 
 ### Retry contract — shell loop with sleep
 
@@ -162,11 +162,11 @@ capabilities:
     implementation: github-actions
 ```
 
-After adding this entry, add the four workflow files under `.github/workflows/` following the per-agent table above. These four files are declared as artefacts below; `/spec-health-activate` (or `adhere-to`) scaffolds them from the templates under `workflows/`.
+After adding this entry, add the two workflow files under `.github/workflows/` following the per-agent table above. These two files are declared as artefacts below; `/spec-health-activate` (or `adhere-to`) scaffolds them from the templates under `workflows/`.
 
 ## Artefacts
 
-The four scheduled-agent workflow files this implementation requires in a conformant adopter repo. Each is a distinct static `file` artefact templated from `workflows/`. All four carry the same `condition` — they scaffold only when the adopter has chosen the `github-actions` implementation. The cron schedule for each is read from `config.yaml#capabilities.spec-health.agents.<name>.schedule`; the gateway, model, and runner come from adopter wiring; `manifest_dir` resolves via the standard variable.
+The two scheduled-agent workflow files this implementation requires in a conformant adopter repo. Each is a distinct static `file` artefact templated from `workflows/`. Both carry the same `condition` — they scaffold only when the adopter has chosen the `github-actions` implementation. The cron schedule for each is read from `config.yaml#capabilities.spec-health.agents.<name>.schedule`; the gateway, model, and runner come from adopter wiring; `manifest_dir` resolves via the standard variable.
 
 ```yaml
 artefacts:
@@ -213,50 +213,6 @@ artefacts:
       type: config_equals
       config_path: capabilities.spec-health.implementation
       equals: github-actions
-
-  - id: workflow-decision-nudge
-    type: file
-    path: ".github/workflows/spec-health-decision-nudge.yml"
-    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-decision-nudge.yml
-    variables:
-      - name: cron_schedule
-        source: config.yaml#capabilities.spec-health.agents.decision-nudge.schedule
-      - name: llm_gateway
-        source: config.yaml#capabilities.spec-health.llm_gateway
-      - name: model
-        source: config.yaml#capabilities.spec-health.model
-      - name: runner
-        source: config.yaml#capabilities.spec-health.runner
-      - name: manifest_dir
-        source: standard#manifest_dir
-    check:
-      type: file_exists
-    condition:
-      type: config_equals
-      config_path: capabilities.spec-health.implementation
-      equals: github-actions
-
-  - id: workflow-observability
-    type: file
-    path: ".github/workflows/spec-health-observability.yml"
-    template: specs/tooling/spec-health/implementations/github-actions/workflows/spec-health-observability.yml
-    variables:
-      - name: cron_schedule
-        source: config.yaml#capabilities.spec-health.agents.observability.schedule
-      - name: llm_gateway
-        source: config.yaml#capabilities.spec-health.llm_gateway
-      - name: model
-        source: config.yaml#capabilities.spec-health.model
-      - name: runner
-        source: config.yaml#capabilities.spec-health.runner
-      - name: manifest_dir
-        source: standard#manifest_dir
-    check:
-      type: file_exists
-    condition:
-      type: config_equals
-      config_path: capabilities.spec-health.implementation
-      equals: github-actions
 ```
 
 ## Notes
@@ -273,6 +229,4 @@ artefacts:
 - [`../README.md`](../README.md) — runtime contract; three shared contracts any implementation must satisfy
 - [`../../spec.md`](../../spec.md) — suite capability spec; abstract contracts
 - [`../../conformance/spec.md`](../../conformance/spec.md) — conformance agent capability spec
-- [`../../catalogue/spec.md`](../../catalogue/spec.md) — catalogue agent capability spec
-- [`../../decision-nudge/spec.md`](../../decision-nudge/spec.md) — decision-nudge agent capability spec
-- [`../../observability/spec.md`](../../observability/spec.md) — observability agent capability spec
+- [`../../../catalogue/spec.md`](../../../catalogue/spec.md) — catalogue capability spec (standalone)

@@ -19,15 +19,15 @@ jobs:
     runs-on: {{runner}}
     timeout-minutes: 30
     env:
-      AGENT: catalogue-agent
+      AGENT: catalogue
       MODEL: "{{model}}"
       LLM_GATEWAY: "{{llm_gateway}}"
       MANIFEST_DIR: "{{manifest_dir}}"
       MAX_ATTEMPTS: 3
       INVOCATION_LOG: ""   # adopter-declared invocation log path
       FAILURE_LOG: ""      # adopter-declared failure log path
-      CATALOGUE_PATH: ""   # adopter-declared catalogue file path
-      WRITE_SCOPE: ""      # Layer 1 allow pattern — catalogue file + logs only
+      CATALOGUE_PATH: ""   # adopter-declared catalogue base path (index.yaml + sub-files)
+      WRITE_SCOPE: ""      # Layer 1 allow pattern — catalogue base path + logs only
     steps:
       - name: Checkout (sparse — catalogue read + write scope)
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
               }")
             OUTPUT=$(echo "$RESPONSE" | jq -r '.content[0].text // empty')
 
-            # Catalogue is regenerated (full rewrite) into $CATALOGUE_PATH here.
+            # Catalogue is regenerated (full rewrite of index.yaml + per-type sub-files) into $CATALOGUE_PATH here.
 
             UNEXPECTED=$(git diff --name-only | grep -vE "$WRITE_SCOPE" || true)
             if [ -n "$UNEXPECTED" ]; then
@@ -80,7 +80,7 @@ jobs:
             fi
 
             # Catalogue agent generates the catalogue, so catalogue_assisted is false.
-            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | catalogue-agent | files_read: ${FILES_READ:-0} | catalogue_assisted: false | outcome: success" >> "$INVOCATION_LOG"
+            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | catalogue | files_read: ${FILES_READ:-0} | catalogue_assisted: false | outcome: success" >> "$INVOCATION_LOG"
             git add -A
             git commit -m "spec-health: catalogue rewrite" || true
             if git push; then
@@ -92,6 +92,6 @@ jobs:
           done
 
           if [ "$ATTEMPT" -gt "$MAX_ATTEMPTS" ]; then
-            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | catalogue-agent | attempt ${MAX_ATTEMPTS} failed: push exhausted" >> "$FAILURE_LOG"
+            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | catalogue | attempt ${MAX_ATTEMPTS} failed: push exhausted" >> "$FAILURE_LOG"
             exit 1
           fi

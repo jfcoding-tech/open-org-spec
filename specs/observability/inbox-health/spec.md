@@ -1,10 +1,10 @@
-# Inbox-load
+# Inbox-health
 
 A tool of the open-org-spec observability capability. Aggregates open `→ <name>` feedback entries across all `feedback.md` files in the repo, ranked by addressee and age. Surfaces the single most diagnostic metric for whether the surface is *responsive* — and therefore whether contributors will keep using it.
 
 **Status:** Draft (0.1.0)
 **Type:** Command
-**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/inbox-load.md`), with an extension at `.open-org-spec/extensions/observability/inbox-load/spec.md`.
+**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/inbox-health.md`), with an extension at `.open-org-spec/extensions/observability/inbox-health/spec.md`.
 
 ## Purpose
 
@@ -42,7 +42,17 @@ For each open entry: age = today − heading date. Bucket by the adopter's aging
 
 ### Step 4 — Render
 
-Write a cached markdown file at the adopter's path. Default sections:
+Write a cached markdown file at the adopter's path. The output file must begin with a machine-readable YAML front-matter block containing these key metrics, followed by the prose body.
+
+```yaml
+key_metrics:
+  open_entries: N
+  stale_entries: N
+  abandoned_entries: N
+  mean_time_to_resolution_days: N.N
+```
+
+Default sections:
 
 1. **Generation header** — timestamp, HEAD ref, refresh hint.
 2. **Summary** — total open / total resolved (lifetime) / median age of open / aging-and-older count.
@@ -76,14 +86,14 @@ The conversation-time digest:
 
 ## Rationale
 
-Of the metric families the observability capability declares, inbox-load is the single most diagnostic for adoption. Contributor counts measure intake; response time measures whether the surface answers. The first time a contributor's ask goes unanswered here, they route the next one elsewhere. The aggregate view surfaces that pattern before it compounds.
+Of the metric families the observability capability declares, inbox-health is the single most diagnostic for adoption. Contributor counts measure intake; response time measures whether the surface answers. The first time a contributor's ask goes unanswered here, they route the next one elsewhere. The aggregate view surfaces that pattern before it compounds.
 
 ## Adoption
 
-Adopters activate `inbox-load` by declaring `capabilities.observability.tool_extensions.inbox-load` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/inbox-load/spec.md`.
+Adopters activate `inbox-health` by declaring `capabilities.observability.tool_extensions.inbox-health` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/inbox-health/spec.md`.
 
 ## Related
 
 - [`../spec.md`](../spec.md) — parent observability capability.
 - [`../../feedback-inbox/spec.md`](../../feedback-inbox/spec.md) — the inbox convention this tool depends on.
-- [`../owner-load/spec.md`](../owner-load/spec.md) — sibling tool; shares scope-walking and people-resolution primitives.
+- [`../owner-health/spec.md`](../owner-health/spec.md) — sibling tool; shares scope-walking and people-resolution primitives.

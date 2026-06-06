@@ -141,6 +141,19 @@ When a canonical spec changes in a way that affects runtime behaviour (signalled
 
 Adopter-specific context (adopter wiring, extension points) is preserved during this update — only the standard execution logic is synced.
 
+### Delta mode
+
+Delta mode is an optional optimisation for scheduled agents that use the catalogue as their primary data source. Instead of regenerating outputs from scratch on every run, a delta-mode agent updates only what changed since its last run.
+
+The pattern:
+
+1. **Read the catalogue and check freshness.** Read the adopter-declared catalogue. Verify it is fresh (its `generated:` timestamp is less than 25h old). A stale catalogue is not a safe delta source.
+2. **Determine what changed since the last run.** Run `git log --since="<last_run_timestamp>" --name-only`, filtered to the agent's governed paths, to build the reduced list of files touched since the agent last ran.
+3. **Update only the changed entries.** Apply the agent's logic to the reduced file list and update only the corresponding entries in the output, leaving untouched entries in place.
+4. **Log the fast-path.** Log `catalogue_assisted: true` when the catalogue fast-path was used, so [`agent-metrics`](agent-metrics/spec.md) can measure the saving.
+
+The `<last_run_timestamp>` comes from the invocation log — the agent reads its own most recent successful entry. This is the same mechanism the [spec-health conformance agent](spec-health/conformance/spec.md#execution-optimisations) uses for its delta mode. If no prior run exists (the log has no entry for this agent), or the catalogue is stale or absent, the agent falls back to a full regeneration.
+
 ### Commands governance directory
 
 The adopter's command directory carries a `README.md` — the ownership index. It lists every command, its classification (repo-wide or scoped), its owner, and a link to its canonical spec or relay target. This is the single surface a contributor reads to understand who owns a command and how to change it.

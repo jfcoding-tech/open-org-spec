@@ -19,7 +19,7 @@ jobs:
     runs-on: {{runner}}
     timeout-minutes: 30
     env:
-      AGENT: conformance-agent
+      AGENT: conformance
       MODEL: "{{model}}"
       LLM_GATEWAY: "{{llm_gateway}}"
       MANIFEST_DIR: "{{manifest_dir}}"
@@ -85,7 +85,7 @@ jobs:
             fi
 
             # Observability — append invocation log entry, then commit + push.
-            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | conformance-agent | files_read: ${FILES_READ:-0} | catalogue_assisted: ${CATALOGUE_ASSISTED:-false} | outcome: success" >> "$INVOCATION_LOG"
+            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | conformance | files_read: ${FILES_READ:-0} | catalogue_assisted: ${CATALOGUE_ASSISTED:-false} | outcome: success" >> "$INVOCATION_LOG"
             git add -A
             git commit -m "spec-health: conformance run" || true
             if git push; then
@@ -97,6 +97,6 @@ jobs:
           done
 
           if [ "$ATTEMPT" -gt "$MAX_ATTEMPTS" ]; then
-            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | conformance-agent | attempt ${MAX_ATTEMPTS} failed: push exhausted" >> "$FAILURE_LOG"
+            echo "$(date -u '+%Y-%m-%d %H:%M') UTC | conformance | attempt ${MAX_ATTEMPTS} failed: push exhausted" >> "$FAILURE_LOG"
             exit 1
           fi

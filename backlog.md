@@ -20,6 +20,50 @@ Not a task list. Not a prioritised roadmap. When an entry's trigger fires, it gr
 
 ## Open
 
+### B-004: Risk registry daily delta implementation
+
+**Added:** 2026-06-06 by Javier Fernandez
+
+**Rationale.** The risk registry (`governance/catalogue/risks.yaml` or equivalent) is regenerated today as a full rebuild. With the [catalogue capability](./specs/tooling/catalogue/spec.md) now emitting a split index plus per-type sub-files, and the [tooling delta-mode pattern](./specs/tooling/spec.md#delta-mode) now defined, the risk registry is a natural candidate for a daily delta implementation: read the fresh catalogue, compute `git log --since="<last_run>" --name-only` over the `risks/` paths, and update only changed risk entries rather than rebuilding the whole registry each run. This cuts the daily cost of keeping the registry current and proves the delta-mode pattern on a second consumer beyond conformance.
+
+**Trigger (OR'd — first fires).**
+- The risk registry rebuild becomes a measurable cost in the agent-metrics weekly report (high `avg_files_read`, `catalogue_assisted: false`).
+- A second registry-style derived artefact wants the same daily-delta treatment, making a shared implementation worthwhile.
+- `risk-at-scope` is revised for any other reason and the delta implementation is the natural co-revision.
+
+**Context.**
+- Depends on the delta-mode pattern in [`specs/tooling/spec.md`](./specs/tooling/spec.md#delta-mode) and the split catalogue format in [`specs/tooling/catalogue/spec.md`](./specs/tooling/catalogue/spec.md).
+- The risk record schema and RAG derivation live in [`specs/risk-at-scope/spec.md`](./specs/risk-at-scope/spec.md); the registry projection is consumed by [`specs/observability/stakeholder-report/spec.md`](./specs/observability/stakeholder-report/spec.md) (Risk health section).
+
+**If adopted.** Graduates as a delta-mode implementation note on the risk registry generation (either a section in `risk-at-scope` or a dedicated registry-generation agent spec under tooling), referencing the shared delta-mode pattern rather than restating it.
+
+---
+
+### B-005: Governance monitor daily workflow (inbox-health + decision-health)
+
+**Added:** 2026-06-06 by Javier Fernandez
+
+**Rationale.** Two observability tools — [`inbox-health`](./specs/observability/inbox-health/spec.md) and [`decision-health`](./specs/observability/decision-health/spec.md) — together answer the daily governance-monitor question: *are asks being answered, and are decisions being made?* Running them as a coordinated daily workflow (rather than relying on ad-hoc invocation) would give a standing governance-health surface that refreshes every day, complementing the on-demand pull model. This pairs with the [`decision-escalation`](./specs/governance-at-scope/tools/decision-escalation/spec.md) tool, which acts on the stale decisions `decision-health` surfaces.
+
+**Trigger (OR'd — first fires).**
+- An adopter wants a single daily governance-health refresh rather than invoking the two tools separately.
+- The observability suite (`suite.md`) is revised and a governance-monitor sub-grouping becomes the natural shape.
+- `decision-escalation` activation creates demand for a daily `decision-health` feed to drive it.
+
+**Context.**
+- The observability suite at [`specs/observability/suite.md`](./specs/observability/suite.md) already runs all five tools sequentially; this entry is about a tighter, governance-focused daily sub-workflow (inbox-health + decision-health) rather than the full five-tool suite.
+- `decision-escalation` routes disposition requests for stale decisions; `decision-health` surfaces them. The two are complementary — one measures, one acts.
+
+**If adopted.** Graduates as a named workflow variant in `specs/observability/suite.md` (a governance-monitor sub-suite) or a standalone scheduled-workflow note, wiring `inbox-health` and `decision-health` on a daily cadence.
+
+---
+
+### B-001: Agent-creation command
+
+**Status:** Open (still). A command that scaffolds a new automated agent (project spec or Case-B capability declaration, write-scope declaration, security layers, implementation wiring, and invocation-log instrumentation) from the [`agent` four-contract spec](./specs/tooling/agent/spec.md). Not yet started. Tracked here so it is not lost amid the v0.2.0 restructuring; the agent contract spec it would scaffold against is stable and unchanged by this release.
+
+---
+
 ### Git-level protection mechanisms for direct-push adopters
 
 **Added:** 2026-05-22 by Javier Fernandez

@@ -1,14 +1,15 @@
-# Spec-Health: Observability Dashboard
+# Agent-metrics Dashboard
 
 **Owner:** Javier Fernandez
 **Status:** Active
-**Type:** Command — on-demand companion to the observability agent
+**Type:** Command — on-demand companion to the agent-metrics agent
 
-Part of the [spec-health suite](../spec.md). Reads the suite's invocation log, failure log, catalogue, and weekly report at any time and renders the current state as a formatted terminal summary. Read-only — does not commit.
+Reads the invocation log, failure log, catalogue, and weekly report at any time and renders the current state as a formatted terminal summary. Read-only — does not commit.
 
 **Related:**
-- [`spec.md`](spec.md) — the scheduled observability agent (writes the weekly report this dashboard reads)
-- [`../spec.md`](../spec.md) — suite spec; shared contracts
+- [`spec.md`](spec.md) — the scheduled agent-metrics agent (writes the weekly report this dashboard reads)
+- [`../catalogue/spec.md`](../catalogue/spec.md) — the catalogue this dashboard reads
+- [`../spec-health/spec.md`](../spec-health/spec.md) — the spec-health suite, whose agents this dashboard surfaces alongside all others
 
 ## Extension points
 
@@ -18,9 +19,9 @@ This command reads adopter-declared paths. Each adopter declares the following v
 |---|---|
 | Invocation log path | File all agents write to on each run |
 | Failure log path | File all agents write to on max-retry exhaustion |
-| Report file path | Where the observability agent appends weekly sections |
+| Report file path | Where the agent-metrics agent appends weekly sections |
 | Catalogue path | The spec catalogue file |
-| Feedback inbox paths | The set of `feedback.md` files conformance and decision-nudge write to |
+| Feedback inbox paths | The set of `feedback.md` files conformance and decision-escalation write to |
 | Conformant scopes | Scopes with proper scope-level governance in place |
 | Non-conformant scopes | Known scopes without scope-level governance yet (completeness % is suppressed for these) |
 | Pre-catalogue baseline | Assumed files per invocation before the catalogue existed (default 45) |
@@ -84,7 +85,7 @@ If no entries fall in the last 7 days, print: `No runs recorded in the last 7 da
 
 Walk the adopter-declared feedback inbox paths.
 
-For each file, collect entries whose heading matches `## YYYY-MM-DD | conformance-agent` and whose date falls within the last 7 days (today minus 7 days, both inclusive).
+For each file, collect entries whose heading matches `## YYYY-MM-DD | conformance` and whose date falls within the last 7 days (today minus 7 days, both inclusive).
 
 Also collect entries whose date falls within the last 14 days (today minus 14 days) — used only for the chronic-spec calculation.
 
@@ -115,19 +116,19 @@ If no nudge entries found in the last 7 days, print: `No conformance nudges writ
 
 ## Step 2b — Catalogue health
 
-Read the adopter-declared catalogue. Check the `generated:` field at the top of the file. If more than 25 hours have elapsed since the `generated:` timestamp, or the file does not exist, skip this section and note:
+Read the adopter-declared catalogue. Check the `generated:` field in the catalogue's `index.yaml`. If more than 25 hours have elapsed since the `generated:` timestamp, or the catalogue does not exist, skip this section and note:
 
 ```
 Catalogue health: stale or absent — will be covered in Step 5.
 ```
 
 If the catalogue is fresh, compute:
-- Total spec entries (count of items under `specs:`)
-- Total decision entries (count of items under `decisions:`)
-- Total feedback inbox entries (count of items under `feedback_inboxes:`)
+- Total spec entries (count of items in `specs.yaml`)
+- Total decision entries (count of items in `decisions.yaml`)
+- Total feedback inbox entries (count of items in `feedback-inboxes.yaml`)
 - Completeness: specs with non-empty `owner` AND non-empty `status` as a percentage of total specs (rounded to nearest integer)
-- Open feedback entries: sum of `open_entries` across all `feedback_inboxes` entries
-- Decisions by status: group `decisions` entries by `status` field, count per value (only list statuses with at least 1 entry)
+- Open feedback entries: sum of `open_entries` across all `feedback-inboxes.yaml` entries
+- Decisions by status: group `decisions.yaml` entries by `status` field, count per value (only list statuses with at least 1 entry)
 
 Render:
 
@@ -153,7 +154,7 @@ If the catalogue is fresh, also compute a **per-scope completeness breakdown**.
 
 **Non-conformant scopes** are the adopter-declared non-conformant scopes list — scopes known to lack scope-level governance. The adopter maintains this list, removing scopes once they are properly constituted.
 
-Group all `specs` entries by their `scope` field. Split the scopes into two groups: conformant (per the adopter list) and non-conformant (per the adopter list).
+Group all `specs.yaml` entries by their `scope` field. Split the scopes into two groups: conformant (per the adopter list) and non-conformant (per the adopter list).
 
 For each **conformant** scope, compute:
 - Total specs in that scope
@@ -199,32 +200,32 @@ If the catalogue is absent or stale (already handled at the top of Step 2b), ski
 
 ---
 
-## Step 2c — Decision-nudge output (last 14 days)
+## Step 2c — Decision-escalation output (last 14 days)
 
-Using the same feedback inbox paths as Step 2a, collect entries whose heading matches `## YYYY-MM-DD | decision-review-nudge` and whose date falls within the last 14 days (today minus 14 days, both inclusive).
+Using the same feedback inbox paths as Step 2a, collect entries whose heading matches `## YYYY-MM-DD | decision-escalation` and whose date falls within the last 14 days (today minus 14 days, both inclusive).
 
 Compute:
-- Total nudges written
-- Nudges by scope (file path → count; only list scopes with at least 1 nudge)
-- Chronic decisions: any decision path mentioned in more than one nudge entry (stale and repeatedly nudged — suggests a blocked decision). Include the owner if extractable from the nudge entry body.
+- Total disposition requests written
+- Requests by scope (file path → count; only list scopes with at least 1 request)
+- Chronic decisions: any decision path mentioned in more than one request entry (stale and repeatedly escalated — suggests a blocked decision). Include the owner if extractable from the request entry body.
 
 Render:
 
 ```
-## Decision-nudge — last 14 days
+## Decision-escalation — last 14 days
 
-Nudges written: N
+Disposition requests written: N
   - decisions/ (repo-wide): N
   - clusters/<name>/decisions/: N
   - projects/<name>/decisions/: N
-  (only list scopes with at least 1 nudge)
+  (only list scopes with at least 1 request)
 
-Chronic stale decisions (nudged >1× in 14 days):
-  - path/to/decision.md (N nudges) — <owner if extractable>
+Chronic stale decisions (escalated >1× in 14 days):
+  - path/to/decision.md (N requests) — <owner if extractable>
   (or: None detected)
 ```
 
-If no nudge entries found, print: `No decision nudges written in the last 14 days.`
+If no request entries found, print: `No decision escalations written in the last 14 days.`
 
 ---
 
@@ -255,7 +256,9 @@ If the catalogue-assisted avg is higher than the baseline, note: `Catalogue-assi
 
 ## Step 4 — Last weekly report summary
 
-Read the adopter-declared report file. Find the last section that begins with `## Week of `. Extract everything from that heading to either the next `## ` heading or end of file.
+Read the adopter-declared report file and the contributor-usage output file. For headline numbers, read the `key_metrics` YAML front-matter block from each file (the block between the opening `---` and closing `---` at the top of the file). Fall back to parsing the prose body if the YAML front-matter block is absent — this covers files generated before the `key_metrics` front-matter convention was introduced.
+
+Find the last section in the report file that begins with `## Week of `. Extract everything from that heading to either the next `## ` heading or end of file.
 
 Render:
 
@@ -265,13 +268,13 @@ Render:
 [content of the most recent ## Week of YYYY-MM-DD section, rendered as-is]
 ```
 
-If no `## Week of` section exists, print: `No weekly report yet — the observability agent has not run.`
+If no `## Week of` section exists, print: `No weekly report yet — the agent-metrics agent has not run.`
 
 ---
 
 ## Step 5 — Conformance gaps (from catalogue)
 
-Read the adopter-declared catalogue. Check the `generated:` field at the top of the file. Compare to today's date and time; if more than 25 hours have elapsed since the `generated:` timestamp, print:
+Read the adopter-declared catalogue. Check the `generated:` field in `index.yaml`. Compare to today's date and time; if more than 25 hours have elapsed since the `generated:` timestamp, print:
 
 ```
 ## Conformance gaps
@@ -279,9 +282,9 @@ Read the adopter-declared catalogue. Check the `generated:` field at the top of 
 Catalogue is stale or absent — run the catalogue agent to regenerate.
 ```
 
-If the file does not exist, print the same message.
+If the catalogue does not exist, print the same message.
 
-If the catalogue is fresh, scan all entries. Count:
+If the catalogue is fresh, scan all `specs.yaml` and `decisions.yaml` entries. Count:
 - Specs where `owner` is an empty string (`owner: ""` or `owner:` with no value)
 - Specs where `status` is an empty string (`status: ""` or `status:` with no value)
 - Decision records where `owner` is an empty string

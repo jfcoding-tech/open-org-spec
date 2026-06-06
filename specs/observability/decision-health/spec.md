@@ -1,10 +1,10 @@
-# Decision-flow
+# Decision-health
 
 A tool of the open-org-spec observability capability. Aggregates the `decisions/` folders across all scopes into one view: how many decisions exist where, their status mix, age of unresolved decisions, and how often each decision is cited by other specs. Surfaces the two most diagnostic metrics for decision quality — *open decisions over age threshold* and *decision linkage*.
 
 **Status:** Draft (0.1.0)
 **Type:** Command
-**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/decision-flow.md`), with an extension at `.open-org-spec/extensions/observability/decision-flow/spec.md`.
+**Reference implementation:** an adopter wires a relay at their command directory (e.g. `.claude/commands/decision-health.md`), with an extension at `.open-org-spec/extensions/observability/decision-health/spec.md`.
 
 ## Purpose
 
@@ -43,7 +43,16 @@ For each ADR file, grep the rest of the repo for relative-path references to the
 
 ### Step 4 — Render
 
-Cached markdown file with:
+Cached markdown file. The output file must begin with a machine-readable YAML front-matter block containing these key metrics, followed by the prose body.
+
+```yaml
+key_metrics:
+  open_decisions: N
+  stale_decisions: N
+  mean_time_to_decision_days: N.N
+```
+
+The file contains:
 
 1. **Generation header.**
 2. **Summary** — total ADRs, status mix, count past *aging* and *stale* thresholds, median citation density.
@@ -79,10 +88,10 @@ Decisions are the artefact most tied to quality: a spec-driven org's value compo
 
 ## Adoption
 
-Adopters activate `decision-flow` by declaring `capabilities.observability.tool_extensions.decision-flow` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/decision-flow/spec.md`.
+Adopters activate `decision-health` by declaring `capabilities.observability.tool_extensions.decision-health` in their manifest, writing the tool extension, and wiring a relay. Worked example: an adopter's extension at `.open-org-spec/extensions/observability/decision-health/spec.md`.
 
 ## Related
 
 - [`../spec.md`](../spec.md) — parent observability capability.
 - [`../../governance-at-scope/spec.md`](../../governance-at-scope/spec.md) — the decisions convention this tool depends on.
-- [`../owner-load/spec.md`](../owner-load/spec.md), [`../inbox-load/spec.md`](../inbox-load/spec.md) — sibling tools.
+- [`../owner-health/spec.md`](../owner-health/spec.md), [`../inbox-health/spec.md`](../inbox-health/spec.md) — sibling tools.

@@ -17,8 +17,8 @@ Per-agent wiring:
 |---|---|---|
 | conformance | adopter-declared conformance schedule | adopter-declared conformance prompt |
 | catalogue | adopter-declared catalogue schedule | adopter-declared catalogue prompt |
-| decision-nudge | adopter-declared decision-nudge schedule | adopter-declared decision-nudge prompt |
-| observability | adopter-declared observability schedule | adopter-declared observability prompt |
+
+The `decision-escalation` and `agent-metrics` agents are no longer part of this suite. Adopters who run them via scheduled Claude Code sessions wire their `CronCreate` entries from those capabilities, not here.
 
 The `CronCreate` call is made once at activation time. Schedules are adjusted by updating the cron wiring to match any changes to the suite spec's extension point values.
 
@@ -72,7 +72,7 @@ capabilities:
     implementation: claude-code
 ```
 
-After adding this entry, run `CronCreate` for each agent with the schedule and prompt file from the per-agent wiring table above.
+After adding this entry, run `CronCreate` for each of the two agents with the schedule and prompt file from the per-agent wiring table above.
 
 ## Notes
 
@@ -85,6 +85,4 @@ After adding this entry, run `CronCreate` for each agent with the schedule and p
 - [`../README.md`](../README.md) — runtime contract; three shared contracts any implementation must satisfy
 - [`../../spec.md`](../../spec.md) — suite capability spec; abstract contracts
 - [`../../conformance/spec.md`](../../conformance/spec.md) — conformance agent capability spec
-- [`../../catalogue/spec.md`](../../catalogue/spec.md) — catalogue agent capability spec
-- [`../../decision-nudge/spec.md`](../../decision-nudge/spec.md) — decision-nudge agent capability spec
-- [`../../observability/spec.md`](../../observability/spec.md) — observability agent capability spec
+- [`../../../catalogue/spec.md`](../../../catalogue/spec.md) — catalogue capability spec (standalone)
