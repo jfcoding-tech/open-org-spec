@@ -175,6 +175,24 @@ artefacts:
       directory: standard#adopter_command_dir
       frontmatter_field: canonical_spec
 
+  - id: pre-commit-hook
+    type: file
+    path: "{{hooks_dir}}/pre-commit"
+    template: specs/tooling/hooks/pre-commit.sh
+    variables:
+      - name: hooks_dir
+        source: standard#git_hooks_dir
+      - name: submodule_path
+        source: standard#submodule_path
+      - name: manifest_dir
+        source: standard#manifest_dir
+    check:
+      type: file_executable
+    condition:
+      type: scan_frontmatter
+      directory: standard#adopter_command_dir
+      frontmatter_field: canonical_spec
+
   - id: drift-sentinel-gitignore
     type: gitignore_entry
     path: .gitignore

@@ -139,6 +139,7 @@ artefacts:
 | `standard#manifest_dir` | Directory containing `config.yaml` (e.g. `.open-org-spec`) |
 | `standard#git_hooks_dir` | `git config core.hooksPath`, defaulting to `.git/hooks` if unset |
 | `standard#adopter_command_dir` | The adopter's command directory for the active LLM interface (e.g. `.claude/commands` for Claude Code) |
+| `standard#submodule_path` | Path where the `open-org-spec` submodule is checked out (e.g. `open-org-spec`), read from `.gitmodules` |
 
 **Variable substitution** applies to `path`, template file content, and `check.value` — wherever `{{variable_name}}` appears.
 
