@@ -79,6 +79,51 @@ This keeps the command invocable from the adopter's LLM interface while moving o
 
 **Representation is extension-overridable.** The relay shape shown above (markdown frontmatter + body line) is the default. Adopters may declare a different relay form in their extension spec (different frontmatter keys, different body wording, an alternate file shape for non-Claude-Code interfaces), provided the relay remains readable by the adopter's LLM interface, the canonical-spec link is preserved, and the extension declares the mapping. The capability requires the relay's behaviour (read and execute the canonical spec) and the discoverability link, not the syntactic form. Removing the canonical-spec link, breaking interface-readability, or making relays unable to be uniformly listed in the commands README is not authorised by this override — only the form changes; the contract does not.
 
+### Self-contained commands
+
+A command that runs in an **automated context** must not depend on reading from `open-org-spec/specs/` at runtime. In an automated context, the open-org-spec submodule is not guaranteed to be initialised — a command that delegates to the standard at runtime may fail silently or produce incorrect results.
+
+A command runs in an automated context when either of the following is true:
+
+- It is wired to a schedule (`CronCreate` or `on: schedule` in a CI workflow)
+- It runs with `--dangerously-skip-permissions`
+
+Such commands must be **self-contained**: all execution logic is embedded directly in the command file or in files guaranteed to be present in the execution environment (such as adopter wiring files under `.open-org-spec/`). The command does not issue read instructions against `open-org-spec/specs/` paths.
+
+#### Declaring the canonical source
+
+A self-contained command that was derived from a standard spec must declare two frontmatter fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `canonical_spec` | path | Relative path (from the repo root) to the standard spec the command's logic is derived from |
+| `canonical_spec_version` | string | The `open-org-spec` version tag at which the command was last synced to its canonical spec |
+
+Example:
+
+```yaml
+---
+description: Daily spec conformance check
+owner: Javier Fernandez
+canonical_spec: open-org-spec/specs/tooling/spec-health/conformance/spec.md
+canonical_spec_version: "0.1.4"
+---
+```
+
+These fields are the basis for drift detection by `adherence-check tooling`. A command without these fields is assumed to be adopter-authored with no standard-spec derivation — not subject to drift checking.
+
+When the adopter bumps the `open-org-spec` submodule to a new version, `adherence-check tooling` uses `canonical_spec_version` to compute the diff between the last-synced version and the current one. If the diff is empty (the canonical spec did not change), `canonical_spec_version` is auto-advanced. If the diff is non-empty, a finding is raised for the manifest owner to review.
+
+#### Updating a self-contained command
+
+When a canonical spec changes in a way that affects runtime behaviour (signalled by a `!` commit in `open-org-spec`), the adopter must:
+
+1. Review the diff between `canonical_spec_version` and the new version for the affected spec
+2. Update the command file to reflect the change
+3. Update `canonical_spec_version` to the new version tag
+
+Adopter-specific context (Busuu wiring, extension points) is preserved during this update — only the standard execution logic is synced.
+
 ### Commands governance directory
 
 The adopter's command directory carries a `README.md` — the ownership index. It lists every command, its classification (repo-wide or scoped), its owner, and a link to its canonical spec or relay target. This is the single surface a contributor reads to understand who owns a command and how to change it.
