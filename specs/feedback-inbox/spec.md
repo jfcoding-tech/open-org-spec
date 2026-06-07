@@ -70,6 +70,22 @@ Tools scanning a feedback file to surface inbox items for a specific contributor
 
 Tools must handle both addressing modes. A tool that only implements per-entry detection misses file-level-addressed inboxes; a tool that only implements file-level detection misses multi-recipient files.
 
+### Entry types
+
+Entries may carry a `[type]` tag in the heading to signal their origin and expected
+response. Tools that file entries use these tags; tools that scan inboxes may filter
+by them.
+
+| Tag | Filed by | Meaning | Expected response |
+|-----|----------|---------|-------------------|
+| `[conformance]` | Conformance agents, `adhere-to` | A spec is missing a required field or section | Spec owner adds the missing content, or records an accepted gap |
+| `[gap]` | Agent acting for a contributor | A proposed contribution needs an extension decision before it can be built | Manifest owner responds: `oos:extend <capability>`, proceed without extension, or decline with rationale |
+| `[scope-elevation]` | Scope-elevation scanner | An artefact may belong at a higher scope, or the same concept exists at multiple scopes | Higher-scope owner resolves: elevate, consolidate, cross-reference, or confirm in place |
+| `[decision-escalation]` | Decision-escalation tool | An open decision is past its staleness threshold with no disposition | Decision owner responds: confirm with date, defer with reason, or reassign |
+
+Tags are optional — untagged entries are legitimate observations with no routing
+implication. Tools that scan inboxes must handle both tagged and untagged entries.
+
 ### Consent and role assignments
 
 When a feedback entry proposes adding a person to a `people.md` in a role, or assigning a responsibility to a named person, the entry itself is not the consent mechanism. The entry opens the conversation; the named person's inline response closes it. See the [`people`](../people/spec.md) capability for the consent and acknowledgement rule for `people.md` additions specifically.

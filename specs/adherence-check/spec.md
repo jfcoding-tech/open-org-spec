@@ -78,6 +78,9 @@ The check does **not** validate whether the named owner is the requester — tha
 - **`standard_version` present.** Missing or empty emits a `gap`.
 - **`owner.name` and `owner.role` present.** Missing either emits a `gap`.
 - **`owner.email` when required.** If any `active` capability in the manifest has `requires_owner_email: true`, and `owner.email` is absent or empty, emit a `gap` citing the artefact-scaffolding requirement.
+- **`adoption_mechanism` present and valid.** Must be `submodule` or `zip`. Missing emits a `gap`; any other value emits a `violation`.
+- **`incoming_path` present when mechanism is `zip`.** When `adoption_mechanism: zip`, `incoming_path` must be declared. Missing emits a `gap`.
+- **`contributor_guide` present when `tooling` is active.** When the `tooling` capability has `status: active`, `contributor_guide` must be declared. Missing emits a `gap`. When declared, the file at that path must exist; a broken path emits a `violation`.
 - **`status` valid for each capability entry.** Must be `active`, `proposed`, or `inactive`. Any other value emits a `violation`.
 - **`activated` present for active capabilities.** Every `status: active` entry must have `activated` in `YYYY-MM-DD` format. Missing or malformed emits a `gap`.
 - **`extension` path resolves.** When declared, must resolve to an existing file relative to `.open-org-spec/`. Broken path emits a `violation`.
@@ -130,7 +133,13 @@ The check does **not** validate whether the named owner is the requester — tha
 
 #### Against `tooling`
 
-The tooling drift check detects self-contained commands whose embedded logic has diverged from the standard spec they were derived from. It runs when the `open-org-spec` submodule pointer is bumped and is **governance-gated**: only the manifest owner runs it.
+**Contributor guide sentinel check.** Runs when `tooling` is `active` and `contributor_guide` is declared in the manifest.
+
+- **`contributor_guide` file exists.** The file at the path declared in the manifest must exist. Missing emits a `gap` citing the `tooling` capability's contributor-guide section — run `/bump` or create the file from `templates/CLAUDE.md`.
+- **Sentinel block present.** The file must contain `<!-- oos:governed-start` followed by a version tag. Missing sentinel emits a `gap` — the governed section has not been written; run `/bump` to regenerate.
+- **Sentinel version matches `standard_version`.** The version in `<!-- oos:governed-start v<version> -->` must equal `standard_version` from the manifest. A mismatch emits a `gap` citing the outdated version and instructing the owner to run `/bump` to regenerate the governed section.
+
+**Tooling drift check.** Detects self-contained commands whose embedded logic has diverged from the standard spec they were derived from. It runs when the `open-org-spec` submodule pointer is bumped and is **governance-gated**: only the manifest owner runs it.
 
 **Governance gate.** Read `owner.name` and `owner.email` from `.open-org-spec/config.yaml`. Compare against `git config user.name` and `git config user.email`. If the current contributor is not the declared manifest owner, emit no findings and output: `"Standard drift check is a governance task for <owner name>. No action needed from you."` Stop.
 

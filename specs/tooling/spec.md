@@ -154,6 +154,29 @@ The pattern:
 
 The `<last_run_timestamp>` comes from the invocation log — the agent reads its own most recent successful entry. This is the same mechanism the [spec-health conformance agent](spec-health/conformance/spec.md#execution-optimisations) uses for its delta mode. If no prior run exists (the log has no entry for this agent), or the catalogue is stale or absent, the agent falls back to a full regeneration.
 
+### Contributor guide
+
+Every adopter using an LLM interface has a file the agent reads on every session — `CLAUDE.md` for Claude Code, `.cursorrules` for Cursor, `.github/copilot-instructions.md` for GitHub Copilot. The standard governs a section of this file.
+
+**The governed section** is content from [`../../templates/contributor-guide.md`](../../templates/contributor-guide.md) — LLM-agnostic rules that apply to any conformant repo: how to load the manifest at session start, how `.open-org-spec/` is protected, general agent behaviour rules, and the gap operative rule. It lives in the adopter's file between sentinels:
+
+```
+<!-- oos:governed-start v<version> -->
+... governed content ...
+<!-- oos:governed-end -->
+```
+
+The governed section is the standard's only write surface in the contributor guide. Everything outside the sentinels is the adopter's content and is never touched by the standard's tooling.
+
+**The `contributor_guide` manifest field** declares which file carries the governed section. It is resolved by `adhere-to tooling` and `/bump`. When the `tooling` capability is active, this field is required in the manifest.
+
+**`adhere-to tooling` checks:**
+- The declared `contributor_guide` file exists.
+- It contains an `<!-- oos:governed-start v<version> -->` sentinel.
+- The version in the sentinel matches `standard_version` from the manifest. A mismatch files a `[conformance]` entry to the manifest owner: "governed section is at v<old>; standard_version is v<new> — run `/bump` to regenerate."
+
+**The governed section is load-bearing.** It carries the session-start instruction that tells the agent to read the manifest and load all active capabilities and their extensions. Extensions therefore compose automatically without any adopter-section edits — the agent loads extension rules from the manifest at session start, not from the contributor guide body.
+
 ### Commands governance directory
 
 The adopter's command directory carries a `README.md` — the ownership index. It lists every command, its classification (repo-wide or scoped), its owner, and a link to its canonical spec or relay target. This is the single surface a contributor reads to understand who owns a command and how to change it.

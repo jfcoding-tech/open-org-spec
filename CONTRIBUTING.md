@@ -70,6 +70,16 @@ git push origin main v<version>
 
 ---
 
+## Pre-spec design: proposals
+
+Every new capability and every significant behaviour change to an existing capability requires a proposal in `proposals/` before the `feat:` commit. A proposal captures the design rationale while the thinking is live — it becomes the `## Rationale` section of the eventual spec and the audit trail for why the capability works the way it does.
+
+The `## Rationale` section is **required** in every proposal. Write it from the motivation, not the mechanism: what problem does this solve, why this approach over alternatives? A proposal without a rationale section is not ready to apply.
+
+See [`proposals/README.md`](./proposals/README.md) for the full lifecycle and promotion checklist.
+
+---
+
 ## Promoting capabilities from an adoption
 
 When promoting a capability from an adoption's `.open-org-spec/extensions/` into this standard:
@@ -78,8 +88,10 @@ When promoting a capability from an adoption's `.open-org-spec/extensions/` into
 2. Set `Status: Active` on the promoted spec.
 3. Remove the "Promotion path" section — it is no longer relevant.
 4. Update relative links to work from the spec's new location under `specs/`.
-5. Use a `feat:` commit unless the promotion includes a breaking change to an existing spec.
-6. Tag a new minor version.
+5. Copy `## Rationale` from the proposal (or the extension's rationale notes) into the promoted spec.
+6. Move the proposal to `proposals/closed/`.
+7. Use a `feat:` commit unless the promotion includes a breaking change to an existing spec.
+8. Tag a new minor version.
 
 ---
 

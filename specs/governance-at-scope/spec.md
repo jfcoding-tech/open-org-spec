@@ -139,6 +139,8 @@ See [`adopt.md`](./adopt.md) for the guided flow that scaffolds a governance fol
 ## Related
 
 - [`adopt.md`](./adopt.md) — the adoption command for this capability.
+- [`tools/decision-escalation/spec.md`](./tools/decision-escalation/spec.md) — governance maintenance tool; escalates open decisions past their staleness threshold.
+- [`tools/scope-elevation/spec.md`](./tools/scope-elevation/spec.md) — governance maintenance tool; detects artefacts placed at a narrower scope than their content warrants.
 - [`../../templates/governance.md`](../../templates/governance.md) — the scaffolding template for a governance folder's README.
 - [`../../backlog.md`](../../backlog.md) — open questions, including command-protocol and adopter-state-detection entries surfaced while designing this capability, plus the catalogue proposal that would reduce contradiction-detection cost.
 - [`../people/spec.md`](../people/spec.md) — companion capability describing who holds roles at a scope. The two are complementary: governance answers "who decides here?" (DACI, per-scope decision authority); people answers "who is here?" (standing membership, lead accountability). When both exist at a scope, neither duplicates the other.

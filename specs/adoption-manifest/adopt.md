@@ -74,9 +74,30 @@ The command asks for these during the run, then proceeds without further manual 
 
 7. **Present capabilities and elicit choices.** Read `open-org-spec/specs/` and list each capability with a one-line summary. Recommend starting small; record the chosen `active` set and any `proposed`.
 
-8. **Scaffold the manifest.** Write `.open-org-spec/config.yaml` with owner, standard version, the chosen capabilities (`active`, dated today), and any `proposed` entries. Create `.open-org-spec/extensions/`.
+8. **Scaffold the manifest.** Write `.open-org-spec/config.yaml` with:
+   - `standard_version` — the version confirmed in step 5.
+   - `adoption_mechanism` — ask the adopter: "Does the standard arrive as a git submodule or as a zip file?" Record `submodule` or `zip`. No default.
+   - `incoming_path` — if `adoption_mechanism: zip`, ask: "Where will you place zip archives before running `/bump`? (e.g. `.open-org-spec/incoming/`)" Record the path.
+   - `contributor_guide` — the agent-instructions path resolved in step 3 (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`). Always set; the `tooling` capability's `adhere-to` check depends on it.
+   - `owner` — name, role, and email from step 4.
+   - Capability entries — chosen capabilities marked `active` (dated today), and any `proposed` entries.
+   Create `.open-org-spec/extensions/`.
 
-9. **Generate the contributor guide at the interface's path.** Copy `open-org-spec/templates/CLAUDE.md` to the agent-instructions path resolved in step 3 (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`). Fill the org description, routing map (step 6), and the manifest owner's name into the `.open-org-spec/` protection rule (step 4). At bootstrap the guide does not yet exist and the manifest owner being elicited *is* its owner, so the command authors it directly. **If a guide already exists at that path, do not overwrite it** — surface the protection-rule and standard-orientation lines for the owner to merge (see "Refusal conditions").
+9. **Generate the contributor guide at the interface's path.** Write the agent-instructions file in two parts:
+
+   **Part A — governed section.** Read `open-org-spec/templates/contributor-guide.md`. Replace `<manifest-owner-name>` with the manifest owner's name (step 4). Wrap in sentinels:
+
+   ```
+   <!-- oos:governed-start v<standard_version> -->
+   <governed content>
+   <!-- oos:governed-end -->
+   ```
+
+   **Part B — adopter section.** Append the adopter-specific skeleton below the closing sentinel: the "What this repo is" paragraph (org description from step 6), the routing map (step 6), and the "Where to start reading" section from `templates/CLAUDE.md`. The adopter customises this section; the governed section above it is managed by `/bump`.
+
+   Write the combined file to the agent-instructions path resolved in step 3.
+
+   **If a guide already exists at that path, do not overwrite it** — surface the governed section (Part A) for the owner to merge above their existing content (see "Refusal conditions").
 
 10. **Activate the chosen capabilities — one at a time, verifying each.** For each capability selected in step 7:
     - If it ships a dedicated `oos:adopt-<capability>` command (e.g. `governance-at-scope`), execute that; otherwise set its status to `active` and run `adhere-to <capability>`.

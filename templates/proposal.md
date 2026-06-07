@@ -16,6 +16,10 @@ See [`problem.md`](./problem.md) for the problem this addresses.
 
 <One paragraph. What the change does.>
 
+## Rationale
+
+<Why this approach over alternatives. Written from the motivation, not the mechanism. This section migrates verbatim into the promoted spec's ## Rationale section — write it for that audience.>
+
 ## Delta
 
 <Pointer to the specs-delta/ subfolder, or a prose description if the change has no structural spec delta. Example:>

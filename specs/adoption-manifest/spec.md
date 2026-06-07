@@ -22,6 +22,9 @@ Absence of the file means no capabilities have been formally activated. The repo
 
 ```yaml
 standard_version: "<x.y.z>"
+adoption_mechanism: submodule | zip    # required
+incoming_path: <path>                  # required when adoption_mechanism: zip
+contributor_guide: <path>              # required when tooling capability is active
 
 owner:
   name: <full name>
@@ -39,6 +42,9 @@ capabilities:
 ```
 
 - `standard_version` — the version of open-org-spec the adopter is pinning to. Capabilities are read against this version; if the standard moves on, the adopter chooses when to upgrade.
+- `adoption_mechanism` — how the adopter receives new versions of the standard. `submodule`: open-org-spec is a git submodule; upgrades are via `git checkout <tag>`. `zip`: the adopter receives zip archives; upgrades are via drop-zone detection at `incoming_path`. Required; no default.
+- `incoming_path` — path to the drop-zone folder where zip archives are placed before running `/bump`. Required when `adoption_mechanism: zip`; absent otherwise.
+- `contributor_guide` — path to the adopter's agent-instructions file (e.g. `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`). This file carries the governed section between `<!-- oos:governed-start -->` / `<!-- oos:governed-end -->` sentinels. Required when the `tooling` capability is active; the `/bump` command regenerates the governed section here on each version upgrade.
 - `owner` — the person accountable for the manifest. The only person authorised to change capability statuses (activate, deactivate, extend) without explicit consent. Schema matches `governance-at-scope`'s owner. Required. The `email` sub-field is optional but required when capabilities declare artefacts that need owner identity at install time (e.g., the tooling capability's pre-push hook). A capability spec signals this requirement by declaring `requires_owner_email: true` in its capability-level metadata — when any `active` capability carries this flag, `owner.email` is required and its absence is a conformance gap.
 - `<capability-slug>` — matches the folder name under `open-org-spec/specs/`. Examples: `people`, `governance-at-scope`, `project`, `tooling`, `feedback-inbox`.
 - `status` — see "Capability statuses" below.
@@ -187,7 +193,7 @@ Three design choices shaped this capability.
 
 ## Adoption
 
-First-time adoption is driven by the [`oos:adopt-manifest`](./adopt.md) command — the autonomous bootstrap. In a single run it scaffolds this manifest, generates the adopter's contributor guide from [`templates/CLAUDE.md`](../../templates/CLAUDE.md) with the owner filled in, and activates the capabilities the adopter chooses (running `adhere-to` for each to wire relays and surface gaps). It elicits only what it cannot infer — the owner, a one-line org description, and which capabilities to activate. See [`adopt.md`](./adopt.md) for the full flow. To extend a capability after adoption, use [`oos:extend`](./extend.md).
+First-time adoption is driven by the [`oos:adopt-manifest`](./adopt.md) command — the autonomous bootstrap. In a single run it scaffolds this manifest, generates the adopter's contributor guide by writing the governed section from [`templates/contributor-guide.md`](../../templates/contributor-guide.md) between sentinel markers and appending the adopter skeleton from [`templates/CLAUDE.md`](../../templates/CLAUDE.md), and activates the capabilities the adopter chooses (running `adhere-to` for each to wire relays and surface gaps). It elicits only what it cannot infer — the owner, a one-line org description, and which capabilities to activate. See [`adopt.md`](./adopt.md) for the full flow. To extend a capability after adoption, use [`oos:extend`](./extend.md).
 
 ## Related
 
