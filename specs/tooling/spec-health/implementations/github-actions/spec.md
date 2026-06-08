@@ -120,6 +120,30 @@ The agent prompt heading carries the retry counter:
 # <Agent Name> — attempt $ATTEMPT_NUMBER of $MAX_ATTEMPTS
 ```
 
+### Alternative: agentic CLI execution
+
+Adopters who need the model to use tools (file reads, edits, shell commands) may use
+`claude -p` (or an equivalent agentic CLI) instead of `curl`. The tradeoff: the CLI
+reads the adopter's contributor guide (`CLAUDE.md` or equivalent) from the working
+tree, which instructs the agent to load capability specs at session start — adding
+context overhead for agents with a fixed, narrow task.
+
+**Required mitigation:** add a step immediately before each agentic CLI call that
+replaces the contributor guide with a minimal agent stub:
+
+```yaml
+- name: Replace contributor guide with agent stub
+  run: |
+    echo "# Agent mode — governance enforced via workflow guardrails and hooks." \
+    > <contributor-guide-path>
+```
+
+Where `<contributor-guide-path>` is the adopter's contributor guide path (e.g. `CLAUDE.md`
+for Claude Code). The stub eliminates startup spec-loading overhead while preserving
+interface-level hooks (e.g. `.claude/settings.json` PreToolUse hooks for write-scope
+enforcement) — hooks fire on tool calls, not on contributor guide content. The stub
+exists only in the working tree during the agent run; it is never committed.
+
 ## File and version control operations
 
 | Operation | Mechanism |

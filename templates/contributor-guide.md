@@ -15,12 +15,14 @@ Before acting, read the adoption manifest at **`.open-org-spec/config.yaml`**. I
 declares which capabilities of the standard this repo has **activated**, at what
 version, and with what local extensions.
 
-- For each capability with `status: active`, load its spec from
-  `open-org-spec/specs/<capability>/spec.md` **plus** any adopter extension the
-  manifest points to under `.open-org-spec/extensions/`. Read them together — the
-  extension overlays the base, it does not replace it.
-- Rules are **read each session, not memorised** — load them fresh so capability
-  evolution is picked up automatically.
+- At session start, read `.open-org-spec/config.yaml` to know which capabilities are
+  active. Do **not** bulk-load all capability specs upfront — load a capability's spec
+  (`open-org-spec/specs/<capability>/spec.md` plus any extension under
+  `.open-org-spec/extensions/`) **on demand**, only when the current task touches that
+  capability's governed domain.
+- Exception: `/bump` and `/adhere-to` load all active capability specs before
+  proceeding — they need the full picture to check drift and conformance.
+- Rules are read fresh each session, not memorised.
 - Capabilities not listed, or listed as `proposed`, are not enforced — you may
   *suggest* activation when you see a matching pattern, but never auto-apply.
 - If `.open-org-spec/config.yaml` is absent, no capabilities are formally active;
