@@ -128,21 +128,32 @@ reads the adopter's contributor guide (`CLAUDE.md` or equivalent) from the worki
 tree, which instructs the agent to load capability specs at session start — adding
 context overhead for agents with a fixed, narrow task.
 
-**Required mitigation:** add a step immediately before each agentic CLI call that
-replaces the contributor guide with a minimal agent stub:
+**Required mitigation:** add a replace step immediately before each agentic CLI call,
+and a restore step immediately after, before any `git add`:
 
 ```yaml
 - name: Replace contributor guide with agent stub
   run: |
     echo "# Agent mode — governance enforced via workflow guardrails and hooks." \
     > <contributor-guide-path>
+
+- name: Run agent
+  run: claude -p … --dangerously-skip-permissions
+
+- name: Restore contributor guide
+  run: git checkout -- <contributor-guide-path> 2>/dev/null || true
 ```
 
 Where `<contributor-guide-path>` is the adopter's contributor guide path (e.g. `CLAUDE.md`
 for Claude Code). The stub eliminates startup spec-loading overhead while preserving
 interface-level hooks (e.g. `.claude/settings.json` PreToolUse hooks for write-scope
-enforcement) — hooks fire on tool calls, not on contributor guide content. The stub
-exists only in the working tree during the agent run; it is never committed.
+enforcement) — hooks fire on tool calls, not on contributor guide content.
+
+**The restore step is required.** The contributor guide is a tracked file. Without the
+restore, `git add -A` after the agent run stages the stub, which then gets committed —
+corrupting the contributor guide for subsequent interactive sessions. Restore it before
+any `git add` operation. The `|| true` is safe: if the file was absent before the
+replace (e.g. outside the sparse checkout), the checkout no-ops.
 
 ## File and version control operations
 
@@ -172,6 +183,8 @@ Running agents with `--dangerously-skip-permissions` removes per-tool-call permi
 
 After the agent runs and before the push, a shell step validates that the agent only modified files within the agent's declared write scope. Any file outside the scope is reverted and the step fails, blocking the push.
 
+**Pre-commit form** (checks the working tree before `git add`; preferred):
+
 ```bash
 UNEXPECTED=$(git diff --name-only | grep -vE '<allowed-pattern>' || true)
 if [ -n "$UNEXPECTED" ]; then
@@ -182,7 +195,29 @@ if [ -n "$UNEXPECTED" ]; then
 fi
 ```
 
-The allowed pattern is declared per agent by the adopter. Adopters must declare their own per-agent write scope patterns at activation time.
+**Post-commit form** (checks committed state after `git push`; use when multiple
+sequential agent steps each commit separately):
+
+```bash
+UNEXPECTED=$(git log "$BASELINE_SHA..HEAD" \
+  --author="<agent-user-name>" --name-only --pretty=format: \
+  | grep -v '^$' | sort -u \
+  | grep -vE '<allowed-pattern>' \
+  || true)
+if [ -n "$UNEXPECTED" ]; then
+  echo "SECURITY: agent committed unexpected files:"
+  echo "$UNEXPECTED"
+  exit 1
+fi
+```
+
+The `--author` filter is **required** in the post-commit form. Without it, `git log
+baseline..HEAD` includes commits from other contributors that landed during the run
+window, producing false positives that fail the validation even though the agent wrote
+nothing unexpected. The filter scopes the diff to commits made by this workflow's git
+user (e.g. `spec-health/conformance`).
+
+The allowed pattern and the agent user name are declared per agent by the adopter.
 
 This layer is enforced in the runner shell — the agent cannot bypass it regardless of what the model generates.
 
