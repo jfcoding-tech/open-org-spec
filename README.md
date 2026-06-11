@@ -34,6 +34,7 @@ Two kinds of repositories use this standard:
   - `tooling` — commands, agents, hooks; includes `agent`, `catchup`, `spec-health`, `adhere-to`
   - `observability` — org-health metrics and contributor activity dashboards
   - `adherence-check` — conformance reports against any active capability
+  - `federation` — how multiple adoptions relate: sibling repos, probe-based access, spillage contract, ephemeral aggregation
 - [`templates/`](./templates/) — copy-paste starters for artefacts defined by the capabilities in [`specs/`](./specs/).
 - [`WHY.md`](./WHY.md) — why an organisation would adopt this: the problem, the pattern, and what it looks like in practice.
 - [`GUIDE.md`](./GUIDE.md) — how to use the standard in an organisation.
@@ -54,8 +55,9 @@ Capabilities are **opt-in and incremental** — activate one when a real use cas
 
 ## Status
 
-Early and deliberately incomplete. Version: **0.2.0**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+Early and deliberately incomplete. Version: **0.8.0**. The standard grows from real use cases; breaking changes are expected until it stabilises.
 
+- **0.8.0** — `federation` capability: how multiple adoptions of the standard relate. Introduces sibling-repo model (no nesting), probe-based access via git submodule init, standalone-capability hard requirement for members, personal-member type, three-rule spillage contract (scope-writes-to-source, probe-don't-configure, aggregate-ephemerally), and information-flow constraint (one-directional for org members; two-directional explicit action for personal members).
 - **0.2.0** — **breaking** — agent restructuring and naming. Dropped the `-agent` suffix everywhere (agents are named for what they do). `catalogue` extracted from spec-health to a standalone tooling capability (`specs/tooling/catalogue/`) emitting a split catalogue: `index.yaml` discovery manifest + per-type sub-files (`specs.yaml`, `decisions.yaml`, `feedback-inboxes.yaml`, `projects.yaml`). `decision-nudge` → `decision-escalation`, moved to `specs/governance-at-scope/tools/` and generalised to route a disposition request (confirm/defer/reassign). The observability agent → `agent-metrics` (`specs/tooling/agent-metrics/`), now measuring all agents and commands, not just spec-health. Spec-health suite reduced to `conformance` + `catalogue` (the latter a referenced standalone capability). Observability capability tools renamed: `owner-load`→`owner-health`, `inbox-load`→`inbox-health`, `decision-flow`→`decision-health`, `spec-touch`→`spec-activity`. Delta-mode optimisation pattern defined in `tooling/spec.md`.
 - **0.1.6** — artefact scaffolding schema: `adhere-to` Step 4 generalised to read `## Artefacts` YAML blocks from capability specs and scaffold physical artefacts (files, gitignore entries, directories) with variable substitution and platform variants. Pre-push hook templates added. `adoption-manifest` owner schema gains optional `email` field. `adhere-to` and `adherence-check` gain tooling drift check (`#### Against tooling`).
 - **0.1.5** — self-contained commands: `tooling/spec.md` defines when commands must be self-contained (`canonical_spec` + `canonical_spec_version` frontmatter fields); `CONTRIBUTING.md` added for standard developers; `review-optimisations` command promoted to standard.
