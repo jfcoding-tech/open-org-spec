@@ -38,6 +38,11 @@ For repo-wide scope, the two folders appear at the repo root: `/governance/` and
 5. **Elicit cross-references.** Ask whether any higher-scope governance should be referenced. Skip for repo-wide scope.
 6. **Scaffold files.** Produce `governance/README.md` with filled frontmatter + prose, and `decisions/README.md` with the ADR convention. Frontmatter contents come from inputs; prose body uses the template in [`../../templates/governance.md`](../../templates/governance.md).
 7. **Confirm.** Show the adopter what was created and invite edits.
+8. **Update observability scope tree if active.** Check the adopter's manifest (`.open-org-spec/config.yaml`) for `capabilities.observability.status: active`. If active:
+   - Read the observability extension file declared at `capabilities.observability.extension`.
+   - Check whether the new scope's path already appears in the extension's scope tree table.
+   - If absent: add a row for the new scope with an appropriate treatment description (recursive walk for module/function scopes; direct-children walk for project-like scopes). Propose the edit to the adopter before writing.
+   - If present: no action needed.
 
 ## Refusal conditions
 
