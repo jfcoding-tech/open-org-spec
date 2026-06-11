@@ -9,6 +9,18 @@ to the adopter's file (the `bump` command does this automatically).
 
 ---
 
+## Before acting — verify the standard is accessible
+
+**Check that `open-org-spec/README.md` exists before doing anything else.** If it is absent, the standard has not been set up — the submodule may not have been initialised, or the standard was not vendored. Tell the contributor:
+
+> The open-org-spec standard is not accessible. If you are using the submodule pattern, run:
+> ```
+> git submodule update --init
+> ```
+> Then restart your session.
+
+Do not proceed with any other work until `open-org-spec/README.md` exists.
+
 ## Read the manifest first
 
 Before acting, read the adoption manifest at **`.open-org-spec/config.yaml`**. It
