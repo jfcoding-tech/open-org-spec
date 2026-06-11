@@ -12,6 +12,7 @@ Guide an adopter through setting up a governance folder at a chosen scope in a c
 - The adopter's repository is conformant with open-org-spec, or is in the process of adopting conformance.
 - The scope the adopter wants to govern already exists in the repository (the command does not create scopes, only governance folders for existing scopes).
 - Adopter has read access to higher-scope governance files if any exist, so they can be cross-referenced.
+- **For new top-level scopes: a decision record must exist before governance is scaffolded.** A scope is top-level when its path is a single segment at the repo root and it is not one of the repo's pre-established structural folders (e.g. `clusters/`, `projects/`, `ai-factory/`, `governance/`, `decisions/`, `open-org-spec/`). If the target scope is top-level, the command searches the repo's decision folders (walking `decisions/` and any `governance/decisions/` at higher scopes) for a record that names or describes the creation of this scope. If none is found, the command refuses and instructs the contributor to create the ADR first — creating a top-level scope is an org design decision that must be recorded before it is governed.
 
 ## Inputs (elicited from the adopter)
 
@@ -49,6 +50,7 @@ For repo-wide scope, the two folders appear at the repo root: `/governance/` and
 - The adopter names a stakeholder as Owner. The command refuses and asks for the accountable role instead.
 - A governance folder already exists at the target scope. The command flags the conflict and does not overwrite.
 - The scope named by the adopter does not exist in the repository. The command refuses; scope must exist before its governance is scaffolded.
+- The target scope is a new top-level scope and no decision record documenting its creation exists. The command refuses and directs the contributor to record the decision first.
 
 ## Non-goals
 
