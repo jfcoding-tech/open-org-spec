@@ -12,13 +12,17 @@ owner:
 
 ## Intent
 
-Extend the `people` capability with a machine-generated catalogue artefact — `people.yaml` — that aggregates every named person across all `people.md` files in the adoption into a single indexed file. Each entry carries the person's name, scope, scope path, and the feedback inbox path for their primary scope. Agents that need to resolve a person's scope (for routing, ownership lookup, or escalation) read this one file instead of scanning every `people.md` in the repo.
+Extend the `people` capability with a machine-generated catalogue artefact — `people.yaml` — that aggregates every named person across all `people.md` files in the adoption into a single indexed file. Each entry carries the person's name, every scope they hold a function in, and the feedback inbox path for each scope.
+
+The catalogue answers org-structure queries — "who leads X?", "what scopes is Howard in?", "who are the contributors on this project?" — without a full-repo walk. It is **not** the routing mechanism for risk escalations or conformance gaps; routing uses the artefact's declared `scope` field (see the companion `risk-scope-field` proposal). A person can legitimately hold Lead in two different scopes; a routing system based on "primary scope" would misroute for half their risks. The catalogue records the full picture; routing decisions use the artefact's own scope declaration.
 
 ## Rationale
 
-**Agents that route to people currently have to walk the whole repo.** The `risk-at-scope` escalation contract requires routing to the risk owner's scope `feedback.md`. The `adhere-to` spec requires routing conformance gaps to the file's declared owner. Any agent that needs to answer "where does this person's feedback go?" currently has no choice but to scan every `people.md` file in the adoption — an expensive full-repo walk on every run.
+**Agents that query org structure currently have to walk the whole repo.** Any agent that needs to answer "who leads this scope?", "is this person a contributor here?", or "what scopes does Howard hold?" has no choice but to scan every `people.md` file in the adoption — an expensive full-repo walk on every run.
 
-**The full-repo walk is fragile, not just slow.** People move between scopes. A person's scope in one `people.md` may disagree with another's, or the latest `people.md` may not yet be committed. An agent reading `people.md` files sequentially can make a routing decision based on stale data and never know it. There is no single authoritative answer to "what is this person's primary scope?" without reading every file and resolving conflicts manually.
+**A person can legitimately hold Lead in two different scopes.** Routing by "primary scope" breaks in this case. The right answer is that artefacts — risks, specs, decisions — declare their own `scope` explicitly, and routing uses that declaration. The people catalogue is for org-structure queries, not for routing resolution. The `risk-scope-field` proposal addresses routing directly.
+
+**The full-repo walk is fragile for queries too.** People move between scopes. A person's scope in one `people.md` may disagree with another's, or the latest `people.md` may not yet be committed. An agent reading `people.md` files sequentially can produce stale answers. A generated catalogue, regenerated daily, is the single authoritative snapshot.
 
 **The catalogue pattern already works for other record types.** The `risk-at-scope` capability generates a `risks.yaml` catalogue aggregated from all `risks/` folders. Tools read that one file instead of walking every `risks/` directory. The same pattern applies to decision records. The people catalogue is the same pattern applied to people records — one generated file, authoritative at catalogue-generation time, consumed by all agents that need it.
 
@@ -71,17 +75,16 @@ A new command (`/catalogue-people` or as a step within the existing `/catalogue`
 5. Write `people.yaml` with `generated:` timestamp and `source_files:` list.
 6. Commit: `chore: people catalogue — YYYY-MM-DD`.
 
-### Routing contract for agents
+### Query contract for agents
 
-Agents that need to resolve a person's feedback inbox — risk scanner, conformance agent, adhere-to, any future routing-dependent tool — follow this contract:
+Agents that need to answer org-structure questions — "who is the lead of scope X?", "what function does person Y hold at scope Z?", "what is the feedback inbox for scope W?" — follow this contract:
 
 1. Read `governance/catalogue/people.yaml` (or the adopter-configured path).
-2. Look up the person by `name`.
-3. Use `primary_scope`'s `feedback_inbox` as the routing target.
-4. If the person is not in the catalogue, fall back to a full `people.md` scan (same as today) and log a `[catalogue-miss]` warning.
-5. If the catalogue is stale (older than 25 hours), log a `[catalogue-stale]` warning and proceed with the scan fallback.
+2. Query by person name or scope slug.
+3. If the person or scope is not in the catalogue, fall back to scanning `people.md` files directly and log a `[catalogue-miss]` warning.
+4. If the catalogue is stale (older than 25 hours), log a `[catalogue-stale]` warning and proceed with the scan fallback.
 
-This contract is declarative — agents do not re-implement the routing logic; they follow the catalogue.
+**Routing for risk escalations and conformance gaps uses the artefact's declared `scope` field, not this catalogue.** A person may legitimately lead multiple scopes; inferring a routing target from person identity is ambiguous. The `risk-scope-field` proposal adds an explicit `scope` field to risk records; the conformance agent reads the spec's `Owner:` field and routes to that scope's inbox directly.
 
 ## Acceptance scenarios
 
