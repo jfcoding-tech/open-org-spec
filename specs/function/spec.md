@@ -74,9 +74,9 @@ The adopter's governance owner must acknowledge any new top-level folder via an 
 
 ## Structural position
 
-A function folder sits at the **repo root**, alongside the adopter's other top-level scopes (lines of business, shared services, infrastructure, project collections, etc.).
+A function folder sits either **at the repo root** (as a peer of clusters/, ai-factory/, etc.) or within a **dedicated structural directory** declared in the adoption manifest (e.g. `functions/` in adopters that prefer grouping all functions together). The scope-registry capability discovers function folders from whichever location the adopter has declared.
 
-Folder name convention: `<function-slug>/` (lowercase, hyphenated). Example: `revenue-function/`, `marketing/`, `finance/`.
+Folder name convention: `<function-slug>/` (lowercase, hyphenated). Example: `functions/revenue/`, `marketing/`, `functions/legal/`.
 
 ---
 

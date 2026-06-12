@@ -32,6 +32,7 @@ A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` f
 | `escalation_threshold` | Yes | Integer days of inactivity (since creation, while `open`) before the risk escalates. Drives RAG derivation and the [escalation contract](#escalation-contract). |
 | `disposition_at` | When dispositioned | ISO date (`YYYY-MM-DD`) of the last disposition action. Set whenever `status` changes or the risk is explicitly re-affirmed. |
 | `disposition_decision_ref` | When `accepted` (required); when `deferred` / `mitigated` (recommended) | Relative link to the decision record that dispositioned the risk. Required when `status: accepted` (points to the ADR). Recommended when `status: deferred` (points to the lightweight disposition record) and `status: mitigated` (points to the project decision or action that resolved it). |
+| `scope` | Required for `risks/` (repo root); optional elsewhere | A scope reference in `<type>/<slug>` format declaring which scope this risk belongs to. Used by the risk scanner to resolve the target feedback inbox via the scope registry. Type vocabulary: `cluster`, `function`, `project`, `module`, `programme` (no slug — use `programme` alone for cross-cutting risks). Examples: `cluster/product-development`, `function/revenue`, `project/agentic-coach-phase-3`, `programme`. |
 | `related` | Optional | Links to relevant project specs, feedback entries, ADRs, or other context. |
 
 **Representation is extension-overridable.** The YAML frontmatter shown above is the default. Adopters may declare a different header form in their extension spec, provided every required field remains present, addressable, and named in the extension's mapping. The capability requires the fields, not the syntactic form. Adding, renaming, or removing required fields is not authorised by this override — only the form changes; the contract does not.
@@ -85,6 +86,12 @@ Risk ownership is narrower than risk creation: an `owner` must be a named person
 ## Escalation contract
 
 When a risk breaches its `escalation_threshold` — `status: open` and `age ≥ escalation_threshold`, i.e. it derives to RED on the age criterion — the **risk scanner writes a disposition request to the scope's `feedback.md`** using the [disposition frame](#disposition-frame). The entry follows the [`feedback-inbox`](../feedback-inbox/spec.md) substantive-entry format, addressed to the risk's owner, and offers *confirm with date / defer with reason / reassign*.
+
+**Feedback inbox routing.** The scanner resolves the target `feedback.md` using the following precedence:
+
+1. **`scope` declared:** the scanner resolves the `scope` field via `governance/catalogue/scopes.yaml` (requires the `scope-registry` capability to be active and `scopes.yaml` to exist). The catalogue entry provides the `feedback_inbox` path; the scanner routes there, addressed to the risk's owner. If `scope-registry` is inactive or the slug is not found in the catalogue, fall back to path inference (step 2).
+2. **`scope` absent:** infer the owning scope from the risk file's path (existing behaviour — unchanged). A risk at `clusters/product-development/risks/` is inferred to belong to the `product-development` cluster and its `feedback.md` is used.
+3. **Fallback:** if neither step resolves a feedback inbox, the scanner routes to `governance/feedback.md` and prefixes the entry with a `[scope-unresolved]` warning so the governance owner can re-route manually.
 
 **Multi-owner escalation.** When a risk has multiple owners, the risk scanner writes **separate disposition request entries to each owner's scope `feedback.md`** — each owner is addressed in their own inbox rather than relying on one shared entry. This guarantees every accountable party sees the request through their normal catchup flow.
 

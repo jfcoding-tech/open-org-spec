@@ -199,6 +199,9 @@ This check only runs when `risk-at-scope` is declared `active` in the adoption m
 - **No open risks in closed projects.** If a `risks/*.md` file exists under `projects/closed/`, any risk with `status: open` emits a `violation` — projects must close all risks before archiving.
 - **`rag` not manually declared.** The `rag` field is derived; if present in the file it must not contradict the computed value (days open vs `escalation_threshold`). A mismatched `rag` emits a `warning`.
 - **Owner declared at scope.** The `owner` field must name a person declared in the scope's `people.md` or governance DACI. Unresolvable owner emits a `warning`.
+- **`scope` field present on programme-level risks (medium severity).** For each risk record found at the repo-root `risks/` path (programme-level risks, not scoped under a project), the frontmatter must include a `scope` field. Missing emits a `gap` at medium severity, routed to the risk owner's nearest feedback inbox.
+- **`scope` field format valid (medium severity).** Any `scope` value in a risk record must match `<type>/<slug>` format or the bare value `programme`. A value that does not match either form emits a `gap` at medium severity.
+- **`scope` field resolves in registry (high severity).** When `scope-registry` is also `active`, any risk record whose `scope` value does not resolve to an entry in `governance/catalogue/scopes.yaml` emits a `gap` at high severity, routed to the risk owner's nearest feedback inbox.
 
 #### Against scope-registry
 

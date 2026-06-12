@@ -32,9 +32,33 @@ For each `open` risk in the registry, evaluate:
 
 A risk that has been breached AND has no recent dedup entry is eligible for escalation.
 
-### Step 3 — Write disposition requests
+### Step 3 — Resolve routing target
 
-For each eligible risk, write a disposition request entry to the scope's `feedback.md`:
+Before writing, determine which `feedback.md` to route the disposition request to:
+
+**For risks whose file lives under a scoped folder (`clusters/`, `functions/`, `projects/`, etc.):**
+
+1. Read `scope` from the risk record frontmatter.
+2. If `scope` is present, look it up in `governance/catalogue/scopes.yaml` to get `feedback_inbox`, and route there addressed to `risk.owner`.
+3. If `scope` is absent, fall back to path inference: use the `feedback.md` nearest to the risk file's parent folder.
+
+**For risks whose file lives under `risks/` (repo root / programme risks):**
+
+1. Read `scope` from the risk record frontmatter. This field is **required** for programme risks.
+2. Look up `scope` in `governance/catalogue/scopes.yaml` to get `feedback_inbox`. Route the escalation entry to that inbox, addressed to `risk.owner`.
+3. If `scope` is absent on a programme risk: log a `[scope-missing]` warning to the adopter-declared warnings file and route to `governance/feedback.md` instead.
+4. If `scope` is present but does not resolve in `governance/catalogue/scopes.yaml`: log a `[scope-not-found]` warning and route to `governance/feedback.md` instead.
+
+**Routing table summary:**
+
+| Risk file location | Routing |
+|---|---|
+| `clusters/`, `functions/`, `projects/`, etc. | `scope` field → `governance/catalogue/scopes.yaml` → `feedback_inbox`; fall back to path inference if `scope` absent |
+| `risks/` (repo root) | Resolved from `risk.scope` via `governance/catalogue/scopes.yaml` — required; fall back to `governance/feedback.md` with `[scope-unresolved]` warning if absent or not found in registry |
+
+### Step 4 — Write disposition requests
+
+For each eligible risk, write a disposition request entry to the resolved `feedback.md`:
 
 ```
 ## YYYY-MM-DD | risk-scanner → <owner> — Risk awaiting disposition: <id>
@@ -52,11 +76,11 @@ Please confirm one disposition:
 ---
 ```
 
-If the risk has multiple owners, write a separate entry addressed to each owner in their respective scope's `feedback.md`.
+If the risk has multiple owners, write a separate entry addressed to each owner in their respective resolved `feedback.md`.
 
 If the target `feedback.md` does not exist, create it with a minimal two-line header before appending.
 
-### Step 4 — Log invocation
+### Step 5 — Log invocation
 
 Append to the adopter-declared invocation log:
 
@@ -76,7 +100,8 @@ YYYY-MM-DD HH:MM UTC | /risk-scanner | files_read: N | catalogue_assisted: true 
 | Invocation log path | Shared invocation log | *(required)* |
 | Warnings file | Where to log registry-absent warnings | *(required)* |
 | Dedup window | Days before re-escalating the same risk | 14 days |
-| Scope→feedback routing | Table mapping risk scope paths to feedback file targets | *(required)* |
+| Scope catalogue path | Path to `governance/catalogue/scopes.yaml` — used to resolve `risk.scope` → `feedback_inbox` for programme risks and optionally for scoped risks | *(required)* |
+| Scope→feedback fallback | Inbox used when `scope` is absent or unresolvable on a programme risk | `governance/feedback.md` |
 
 ---
 
@@ -91,3 +116,4 @@ Daily, after the risk registry agent. The scanner must always operate on a fresh
 - [`spec.md`](./spec.md) — risk-at-scope capability; escalation contract and disposition frame
 - [`registry.md`](./registry.md) — risk registry agent; builds the registry this scanner reads
 - [`../feedback-inbox/spec.md`](../feedback-inbox/spec.md) — the inbox conventions used for disposition requests
+- `governance/catalogue/scopes.yaml` — scope catalogue; maps scope identifiers to `feedback_inbox` paths used for routing programme risks

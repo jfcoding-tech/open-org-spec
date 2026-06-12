@@ -21,7 +21,24 @@ This command creates the record; it does not disposition the risk. Disposition (
 2. **Description.** Free text: what could go wrong and why it matters.
 3. **Owner(s).** One or more named people accountable for dispositioning the risk. Each must be declared at the target scope (`people.md` or DACI); see Step 3.
 4. **Escalation threshold.** Integer days of inactivity before the risk escalates. The command offers the scope/repo default (an [extension point](./spec.md#extension-points), e.g. 30) as the suggested value, letting the contributor override.
-5. **Scope.** Where should this risk live? One of: a project, a module, a cross-module workstream, or the programme level (repo root, for cross-cutting risks). The command asks; it does not infer.
+5. **Scope.** Where should this risk live? The command prompts for a `scope` value in the form `<type>/<slug>` (e.g. `cluster/product-development`, `project/sophie-content-pairing`). It does not infer scope silently.
+
+   **Type vocabulary** — the contributor must choose one of:
+   | Type | Meaning |
+   |------|---------|
+   | `cluster` | A line-of-business cluster (e.g. `cluster/customer-lifecycle`) |
+   | `function` | A cross-cutting function or shared service (e.g. `function/revenue`) |
+   | `project` | A time-boxed initiative (e.g. `project/iso-42001`) |
+   | `module` | A sub-unit within a cluster or function |
+   | `programme` | Repo-root level — for risks that cut across the whole organisation |
+
+   **When `type` is `programme`** the `scope` field is required in the record's YAML frontmatter; the command writes `scope: programme/root` unless the contributor supplies a different slug.
+
+   **For all other types** the `scope` field is optional in the frontmatter (the file's path already implies it), but the command records it when supplied.
+
+   **Looking up valid scopes.** If `governance/catalogue/scopes.yaml` exists in the repository, the command offers to list the declared scopes so the contributor can pick one by name rather than typing it free-form. If the file is absent, the command proceeds with the contributor's free-form input.
+
+   **Path inference.** If the contributor is already working within a recognisable scoped folder (e.g. `clusters/foo/`, `projects/bar/`), the command offers to derive `scope` from the path and asks the contributor to confirm or override rather than type it from scratch.
 
 The `id` and `rag` are **not** elicited — `id` is suggested from the registry (Step 2) and confirmed; `rag` is derived (Step 4 of scaffolding).
 
@@ -37,7 +54,7 @@ with YAML frontmatter conforming to the [risk record schema](./spec.md#risk-reco
 
 ## Steps
 
-1. **Collect fields.** Elicit title, description, owner(s), escalation threshold, and scope per [Inputs](#inputs-elicited-from-the-contributor). Derive a `slug` from the title (lowercase, hyphenated) and form the filename `YYYY-MM-DD-slug.md` using today's date.
+1. **Collect fields.** Elicit title, description, owner(s), escalation threshold, and scope per [Inputs](#inputs-elicited-from-the-contributor). For scope: attempt path inference first and offer to confirm; otherwise prompt for `<type>/<slug>` and offer to list options from `governance/catalogue/scopes.yaml` when that file exists. Derive a `slug` from the title (lowercase, hyphenated) and form the filename `YYYY-MM-DD-slug.md` using today's date.
 
 2. **Suggest the next id.** Read the risk registry — `governance/catalogue/risks.yaml` if the catalogue is split, else `governance/risk-registry.yaml` — and find the highest assigned `R-NNN`. Suggest the next sequential id (e.g. registry's max is `R-014` → suggest `R-015`). **If no registry exists yet, suggest `R-001`.** Confirm the id with the contributor (the author declares it; the suggestion is a convenience), respecting the configured [id prefix](./spec.md#extension-points).
 
@@ -49,6 +66,7 @@ with YAML frontmatter conforming to the [risk record schema](./spec.md#risk-reco
    - `owner` — the named person(s).
    - `status: open`.
    - `escalation_threshold` — the chosen days.
+   - `scope` — **required** when `type` is `programme` (written as `programme/root` or the contributor-supplied slug). **Included** for all other types when the contributor confirmed or provided it; omitted only when the contributor explicitly skipped it and the path already implies the scope.
    - `rag` — **derived**: GREEN at creation (`age` is 0, below 50% of the threshold). Recorded as a cached snapshot per [RAG derivation](./spec.md#rag-derivation).
    - `disposition_at` — omitted (no disposition has occurred yet).
    - `disposition_decision_ref` — omitted (only set on disposition).
