@@ -146,6 +146,44 @@ Daily (adopter-declared). The catalogue regenerates once per day at the adopter'
 | Commit message format | Template for the automated commit | `chore: regenerate catalogue — YYYY-MM-DD` |
 | Schedule | When the catalogue agent fires | Daily |
 
+## Unified walk pattern
+
+### Principle
+
+A single catalogue run walks the repo once and emits all registered catalogue types. Each catalogue type is a handler that filters the repo snapshot for its records. The walk happens once; the handlers run against the cached snapshot. The repo is the input; all catalogue files are outputs of the same read.
+
+Running separate agents — one per catalogue type — causes the repo to be read N times, once per agent. Each file is parsed repeatedly, the token cost scales linearly with the number of active catalogue types, and each catalogue reflects a slightly different repo state. The unified walk eliminates all three problems.
+
+### Walk phases
+
+The unified agent runs three phases in sequence:
+
+**Phase A — Scope discovery.** Read structural folders (`clusters/`, `functions/`, `projects/`, and any adopter-declared top-level modules). Build the scope index: the set of all known scopes, their types, and their root paths. Emit `scopes.yaml`.
+
+**Phase B — Record collection.** For each discovered scope, read its governed sub-paths in a single pass: `decisions/`, `risks/`, `people.md`, `feedback.md`, and any additional paths declared by active catalogue handlers. Collect all records into an in-memory snapshot keyed by scope and record type. No file is read twice.
+
+**Phase C — Output.** Pass the collected snapshot to each registered handler. Each handler filters for its record type and writes its output file. Emit `decisions.yaml`, `risks.yaml`, `feedback-inboxes.yaml`, and — when the people-catalogue capability is active — `people.yaml`. Write `index.yaml` last.
+
+### Handler registration
+
+Each active catalogue capability registers a handler with the unified agent via the adoption manifest. A handler declares:
+
+- **`collect`** — which files or folders to read per scope during Phase B (e.g. `decisions/`, `risks/`, `people.md`)
+- **`output_schema`** — the shape of the records this handler emits
+- **`output_path`** — the sub-file to write under the catalogue base path (e.g. `risks.yaml`)
+
+The unified agent merges all handler `collect` declarations before Phase B begins, so each file is read at most once regardless of how many handlers declare an interest in it.
+
+### On-demand standalone agents
+
+Individual catalogue agents (e.g. `scope-registry/agent.md`, a standalone risks agent) remain valid for on-demand regeneration of a single catalogue type. A contributor who needs only `risks.yaml` refreshed immediately does not need to run the full unified pass. The unified agent is the pattern for **scheduled runs**; standalone agents are the pattern for **on-demand, single-type regeneration**.
+
+Both modes write to the same output paths and use the same handler schemas, so their outputs are interchangeable and `index.yaml` always reflects the most recently written version of each sub-file regardless of which mode wrote it.
+
+### Cost implication
+
+The unified pattern reduces LLM token cost proportionally to the number of active catalogue types. With N catalogue types running as separate agents, the repo is read N times and the token cost is N times the cost of a single walk. The unified pattern reads the repo once, so the per-run token cost is approximately 1/N of the separate-agent total. The reduction compounds as more catalogue capabilities are activated.
+
 ## Rationale
 
 The catalogue is the cheap query layer the whole repo's tooling depends on. Splitting the output into an index plus per-type sub-files means a consumer pays only for what it reads: a decision-only tool parses `decisions.yaml` and nothing else; a full-repo consumer follows `index.yaml`. The daily regeneration cadence keeps the projection fresh enough that consumers can trust it rather than falling back to a filesystem walk, while the index's per-sub-catalogue timestamps let a consumer detect staleness (e.g. refuse the fast-path if the relevant sub-file is older than its freshness window).
