@@ -173,6 +173,48 @@ The decision is the adopter's. The agent does not auto-activate.
 
 For `inactive` capabilities, the agent does not suggest again — the adopter's recorded decision stands until they remove the entry.
 
+## Artefacts
+
+A capability may declare **artefacts** — files it owns or manages in the adopter's repo, scaffolded or kept current by the standard's tooling. The adoption-manifest capability declares one artefact: the governed section of the contributor guide.
+
+```yaml
+artefacts:
+  - id: governed-section
+    type: file
+    path: "{{contributor_guide}}"
+    template: specs/adoption-manifest/governed-section.md
+    variables:
+      - name: standard_version
+        source: config.yaml#standard_version
+      - name: contributor_guide
+        source: config.yaml#contributor_guide
+        default: CLAUDE.md
+    check:
+      type: file_contains
+      value: "<!-- oos:governed-start {{standard_version}} -->"
+    description: >
+      Manages the governed section of the contributor guide. When the sentinel
+      version is stale (does not match the current standard_version), /adhere-to
+      tooling replaces the content between the sentinels with the expanded template.
+      This makes governed section updates model-agnostic and automatic on every bump.
+```
+
+### The governed section mechanism
+
+The adopter's contributor guide (the file named by `contributor_guide` in the manifest — `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`, or equivalent) carries a **governed section**: a block of agent instructions the standard owns and keeps current, surrounded by two sentinel comments:
+
+```markdown
+<!-- oos:governed-start <standard_version> -->
+… standard-authored agent instructions, expanded from the governed-section template …
+<!-- oos:governed-end -->
+```
+
+Everything outside the sentinels is the adopter's own content, untouched by tooling. Everything between them is regenerated from [`governed-section.md`](./governed-section.md) with the manifest's variables substituted in.
+
+**What triggers a reinstall.** The opening sentinel records the standard version the governed section was generated against (`<!-- oos:governed-start 1.4.0 -->`). The artefact's `check` is a `file_contains` test for the sentinel stamped with the *current* `standard_version`. When the standard is bumped, the stamped version no longer matches — the sentinel is **stale** — and the check fails. On the next `/adhere-to tooling` run, the stale sentinel is the signal to replace the content between the two sentinels with the freshly expanded template and re-stamp the opening sentinel with the new version. A matching sentinel means the governed section is current and nothing is rewritten. This makes governed-section updates model-agnostic and automatic on every bump, rather than something an agent has to remember to do by hand.
+
+**Why this lives in adoption-manifest, not adhere-to.** The `contributor_guide` path is declared in the manifest — adoption-manifest owns the fact that there *is* a contributor guide and where it lives. The governed section is the *standard's* contribution to that adopter-owned file, so the artefact that manages it belongs to the same capability that declares the file. `adhere-to` (a tool under the `tooling` capability) is only the *mechanism* that performs the reinstall when it detects a stale sentinel; it does not own the artefact definition. Keeping the declaration here means any tool capable of reading artefact declarations — not just `adhere-to` — can manage the governed section, and the source of truth for "what file, what template, what check" stays with the capability that declares the file.
+
 ## What is not prescribed
 
 - **A specific YAML schema parser or validator.** Adopters use whatever tooling their LLM interface supports. The schema above is descriptive, not executable.

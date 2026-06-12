@@ -3,9 +3,14 @@
 # Replaces the adopter's hand-maintained governance-observability.yml.
 #
 # Template variables substituted at adoption time by /adhere-to tooling:
-#   {{runner}}       — adopter-declared runs-on runner label
-#   {{schedule}}     — cron expression for the scheduled trigger
-#   {{model_haiku}}  — adopter-declared Haiku model id for the data-collection agents
+#   {{runner}}           — adopter-declared runs-on runner label
+#   {{schedule}}         — cron expression for the scheduled trigger
+#   {{model_haiku}}      — adopter-declared Haiku model id for the data-collection agents
+#   {{exclude_agents}}   — optional list of agent slugs to omit (e.g. ["inbox-health", "risk-load"])
+#                          Supported slugs: owner-health, inbox-health, decision-health,
+#                          contributor-activity, spec-activity, risk-load.
+#                          Steps whose slug appears in exclude_agents are dropped at install time.
+#                          The validate-write-scope allowlist is narrowed to match.
 #
 # Trigger: schedule (cron) AND workflow_dispatch (manual on-demand trigger).
 #
@@ -99,7 +104,11 @@ jobs:
       # ── Helper pattern used by every agent step ──────────────────────────────
       # Each step: config user.name → pull → extract PROMPT → run agent →
       #            stage → commit if changed → push with retry → log on failure.
+      #
+      # Steps wrapped in {{#unless (includes exclude_agents "<slug>")}} … {{/unless}}
+      # are dropped at install time when the adopter lists the slug in exclude_agents.
 
+      {{#unless (includes exclude_agents "owner-health")}}
       - name: Run /owner-health
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -119,7 +128,9 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: owner-health push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
+      {{#unless (includes exclude_agents "inbox-health")}}
       - name: Run /inbox-health
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -140,7 +151,9 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: inbox-health push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
+      {{#unless (includes exclude_agents "decision-health")}}
       - name: Run /decision-health
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -161,7 +174,9 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: decision-health push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
+      {{#unless (includes exclude_agents "contributor-activity")}}
       - name: Run /contributor-activity
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -182,7 +197,9 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: contributor-activity push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
+      {{#unless (includes exclude_agents "spec-activity")}}
       - name: Run /spec-activity
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -203,7 +220,9 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: spec-activity push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
+      {{#unless (includes exclude_agents "risk-load")}}
       - name: Run /risk-load
         if: steps.sync.outputs.DIVERGED != 'true'
         run: |
@@ -224,12 +243,17 @@ jobs:
             git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: risk-load push failure" && git push origin main || true
             exit 1
           fi
+      {{/unless}}
 
       - name: Validate write scope
+        # The allowlist is narrowed to match the active agent set.
+        # Each pattern is conditionally included only when the corresponding agent is not excluded.
+        # The installer emits only the patterns for agents that were kept.
         run: |
+          ALLOW_PATTERN='^governance/observability/(spec-health/{{#unless (includes exclude_agents "owner-health")}}|owner-load\.md{{/unless}}{{#unless (includes exclude_agents "inbox-health")}}|inbox-load\.md{{/unless}}{{#unless (includes exclude_agents "decision-health")}}|decision-health\.md{{/unless}}{{#unless (includes exclude_agents "contributor-activity")}}|contributor-activity\.md{{/unless}}{{#unless (includes exclude_agents "spec-activity")}}|spec-touch\.md{{/unless}}{{#unless (includes exclude_agents "risk-load")}}|risk-load\.md{{/unless}})'
           UNEXPECTED=$(git log "${{ steps.baseline.outputs.sha }}..HEAD" --author="observability-suite" --name-only --pretty=format: 2>/dev/null \
             | grep -v '^$' | sort -u \
-            | grep -vE '^governance/observability/(owner-load\.md|inbox-load\.md|decision-health\.md|contributor-activity\.md|spec-touch\.md|risk-load\.md|spec-health/)' \
+            | grep -vE "${ALLOW_PATTERN}" \
             || true)
           if [ -n "$UNEXPECTED" ]; then
             echo "SECURITY: observability-suite wrote to unexpected files:"
