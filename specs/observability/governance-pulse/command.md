@@ -1,12 +1,12 @@
 ---
 description: Generate the Governance Pulse — a self-contained HTML stakeholder governance report from observability outputs
 owner: Javier Fernandez
-canonical_spec: open-org-spec/specs/observability/stakeholder-report/spec.md
+canonical_spec: open-org-spec/specs/observability/governance-pulse/spec.md
 canonical_spec_version: "0.12.0"
 execution_context: claude-code
 ---
 
-# /stakeholder-report
+# /governance-pulse
 
 Generates the **{{title}}** — a self-contained HTML governance health report for {{organisation}}. Reads from existing observability output files; does **not** re-run observability tools. Produces a single portable HTML file that opens in any browser without an internet connection and can be emailed or shared without requiring repository access.
 
@@ -16,7 +16,7 @@ Default variable values (substituted by `/adhere-to tooling` from the adopter's 
 |---|---|
 | `{{title}}` | `Governance Pulse` |
 | `{{organisation}}` | from `config.yaml` `owner.name` |
-| `{{output_path}}` | `governance/observability/stakeholder-report.html` |
+| `{{output_path}}` | `governance/observability/governance-pulse.html` |
 | `{{catalogue_path}}` | `governance/catalogue` |
 | `{{model}}` | `claude-sonnet-4-6` |
 | `{{stale_decision_threshold}}` | `14` |
@@ -580,8 +580,8 @@ The following thresholds determine badge colours:
 Detect OS then call the pre-approved log script:
 
 1. Run `uname -s` to detect OS (pre-approved, no prompt).
-2. macOS / Linux: `bash governance/observability/command-log.sh /stakeholder-report <files_read_count> true <outcome> {{model}} || true`
-3. Windows: `powershell -File governance/observability/command-log.ps1 /stakeholder-report <files_read_count> true <outcome> {{model}}; $true`
+2. macOS / Linux: `bash governance/observability/command-log.sh /governance-pulse <files_read_count> true <outcome> {{model}} || true`
+3. Windows: `powershell -File governance/observability/command-log.ps1 /governance-pulse <files_read_count> true <outcome> {{model}}; $true`
 
 Where `<outcome>` is `success` if the HTML file was written without error, `partial` if one or more source files were absent, or `error` if the HTML file could not be written.
 
@@ -604,7 +604,7 @@ Do not retry on missing source files — treat absent files as expected and rend
 Return the following digest after the HTML file is written:
 
 ```
-/stakeholder-report complete.
+/governance-pulse complete.
 Output: {{output_path}}
 Generated: <YYYY-MM-DD HH:MM UTC>
 
