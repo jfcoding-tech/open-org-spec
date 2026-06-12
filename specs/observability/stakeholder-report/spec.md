@@ -1,4 +1,6 @@
-# Stakeholder Report
+# Governance Pulse
+
+> The technical identifier for this tool is `stakeholder-report` (file paths, command names, and manifest entries use this identifier). The display title is **Governance Pulse**.
 
 **Owner:** Javier Fernandez
 **Status:** Active
@@ -130,6 +132,101 @@ Display: headline counts with RAG traffic lights. Table of RED risks by scope an
 
 ---
 
+## Reading guide
+
+The five metric families (plus risk health) address five distinct dimensions of whether an organisation is operating well. Together they form a coherent diagnostic model. This section defines what each family measures, what healthy and concerning states look like, and what action each state calls for.
+
+Adopters may extend or override the action guidance in their extension spec. They may name specific roles (e.g. "the governance owner is the VP Engineering") and add org-specific protocols (e.g. "when inbox-load turns red, flag in the weekly leadership review"). Suppressing a metric family's interpretation is not permitted — this guide is a floor, not a ceiling.
+
+---
+
+### Ownership
+
+**What it measures:** the percentage of active scopes — clusters, functions, projects, modules — that have a named, accountable lead. Derived from `people.md` Lead tables across all governed scopes.
+
+**Healthy:** every active scope has a named lead. The org knows who is accountable for every piece of work.
+
+**Concerning:** one or more active scopes have no named lead (`TBD` or absent). These scopes are ungoverned — decisions about them cannot be made, feedback routed to them has no recipient, and the work they describe has no one accountable for its accuracy.
+
+**Action:** unowned scopes are not just a governance gap — they are candidates to be stopped. If no one is willing to own a scope, it is a signal that the work it represents may no longer be needed or prioritised. The governance owner should ask: *does this scope need an owner, or does it need to be closed?* Assigning a nominal owner to avoid the red signal is the wrong response.
+
+**Who acts:** governance owner (to assign or close) or the org lead who would logically own the scope.
+
+---
+
+### Decision velocity
+
+**What it measures:** how quickly open decisions close, and how many are currently stalled past the adopter-declared staleness threshold. Derived from decision records across all governed scopes.
+
+**Healthy:** decisions are closing at a regular cadence. The gap between a decision being opened and `decided_at` being recorded is short. No decisions have been open past the staleness threshold without an explicit deferral.
+
+**Concerning:** decisions are open and ageing. Work that depends on those decisions is blocked, even if the blockage is not yet visible in the delivery system.
+
+**Action:** decision velocity is the most direct indicator of organisational execution efficiency. Fast delivery requires two things: speed of execution and speed of decision. Organisations that are slow to decide are slow to deliver, even when their teams are executing well. A stalled decision should be named by its owner: either decide it, explicitly defer it with a rationale and a review date, or close it as no longer needed. Leaving it open is not a neutral choice — it is invisible blocking.
+
+**Who acts:** the decision's declared owner. If no owner is declared, the scope's governance owner routes to the right person.
+
+---
+
+### Inbox responsiveness
+
+**What it measures:** how many unresolved observations exist across the org's feedback inboxes — `feedback.md` files at every governed scope. Derived from open (non-`[resolved]`) entries in feedback inboxes.
+
+**Healthy:** feedback entries are being read and resolved at a reasonable cadence. The organisation is processing the observations being made about its own work.
+
+**Concerning:** entries are accumulating unresolved. The feedback loop is broken.
+
+**Action:** the feedback inbox is not only an improvement channel — it is the organisation's primary collaboration surface. When a contributor writes into a scope's feedback inbox, they are attempting to influence the work of a person they do not directly manage. Inbox responsiveness is therefore a measure of how well the organisation collaborates across boundaries. A low responsiveness score does not mean people are unresponsive as individuals — it means the organisation has not created the conditions for cross-boundary influence to flow. The scope owner is the first responder; patterns of low responsiveness across many scopes signal a structural problem, not individual negligence.
+
+**Who acts:** each scope's owner (to resolve entries in their inbox). The governance owner reads the aggregate pattern.
+
+---
+
+### Contribution trend
+
+**What it measures:** how many distinct contributors are writing to the repo, how frequently, and whether the trend is rising, stable, or falling. Derived from git commit authorship across governed paths.
+
+**Healthy:** contribution is distributed across multiple contributors and is consistent with the maturity of the work. New initiatives show rising contribution; stable programmes show consistent contribution; initiatives in maintenance show lower but non-zero contribution.
+
+**Concerning:** two different concerning states exist, and they require different responses:
+
+- **Low contribution on new or active work** — the org's knowledge is not being made explicit. Work is being done but not written down. The repo is not functioning as the organisation's operating surface; it is a filing cabinet that nobody files in.
+- **Zero contribution on supposedly active work** — a scope may have been "installed": treated as finished and no longer evolved, even though the reality it describes has moved on. Installed specs are more dangerous than absent specs — they look authoritative but describe a past state.
+
+**Maturity read:** falling contribution is not always a warning. An initiative that started with high contribution and has settled into low but stable contribution has likely reached a healthy maintenance phase. The governance owner should distinguish between *maturing* (expected, positive) and *neglecting* (unexpected, concerning).
+
+**Who acts:** scope owners (to write down what they're doing). Governance owner (to distinguish maturity from neglect, and to ask whether installed specs need updating or closing).
+
+---
+
+### Spec activity
+
+**What it measures:** how recently each spec was last meaningfully edited. Derived from git log per spec file.
+
+**Healthy:** specs are being updated as the work they describe evolves. The written record and the organisational reality are in sync.
+
+**Concerning:** specs have not been touched in a long time, relative to the adopter-declared staleness threshold.
+
+**Action:** a spec that is not being updated is one of two things: either the work it describes is genuinely stable (which is acceptable) or the spec is getting "installed" — the organisation has moved on but the document has been left behind as a historical artefact that still looks current. The distinction matters: a stable spec that accurately describes a stable reality is fine; an installed spec that no longer describes reality is misleading. The spec owner should ask: *does this spec still accurately describe how this part of the org works? If not, update it or close the scope.*
+
+**Who acts:** each spec's declared owner.
+
+---
+
+### Risk health
+
+**What it measures:** the volume and severity of open risks across the org's risk registry, and how promptly they are being owned and dispositioned. Derived from the risk registry file.
+
+**Healthy:** all open risks have named owners. RED risks are being escalated and dispositioned promptly. The registry is current — risks are being added when identified and closed when resolved.
+
+**Concerning:** unowned risks, RED risks without recent disposition activity, or a registry that has not been updated recently. A growing count of AMBER risks approaching threshold without owner action is an early warning.
+
+**Action:** risk health is not about eliminating risk — it is about ensuring every known risk has an accountable owner and a plan. An unowned risk is categorically different from an owned risk at the same RAG status: the unowned risk has no one responsible for preventing its escalation. The governance owner should ensure every open risk has an owner and that RED risks are being actively managed, not just observed.
+
+**Who acts:** each risk's declared owner (to update disposition). Governance owner (to assign owners to unowned risks and escalate unactioned RED risks).
+
+---
+
 ## Extension points
 
 | Extension point | Description | Default |
@@ -165,6 +262,42 @@ The agent step reads whatever tool outputs are currently available — it does n
 - **Weekly** — after the weekly observability suite completes. All sections fresh simultaneously.
 
 For the chart library: embed the minified source inline in a `<script>` tag. No CDN. No runtime HTTP requests.
+
+---
+
+## Artefacts
+
+```yaml
+artefacts:
+  - id: stakeholder-report-command
+    type: file
+    path: {{standard#adopter_command_dir}}/stakeholder-report.md
+    template: specs/observability/stakeholder-report/command.md
+    variables:
+      - name: model
+        source: config.yaml#capabilities.observability.model
+        default: claude-sonnet-4-6
+      - name: output_path
+        source: config.yaml#capabilities.observability.output_path
+        default: governance/observability/stakeholder-report.html
+      - name: catalogue_path
+        source: config.yaml#capabilities.observability.catalogue_path
+        default: governance/catalogue
+      - name: title
+        source: config.yaml#capabilities.observability.title
+        default: Governance Pulse
+      - name: organisation
+        source: config.yaml#owner.name
+        default: ""
+      - name: stale_decision_threshold
+        source: config.yaml#capabilities.observability.stale_decision_threshold
+        default: "14"
+      - name: ownership_coverage_threshold
+        source: config.yaml#capabilities.observability.ownership_coverage_threshold
+        default: "80"
+    check:
+      type: file_exists
+```
 
 ---
 

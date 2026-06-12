@@ -12,11 +12,13 @@ owner:
 
 ## Intent
 
-Two changes to the `stakeholder-report` capability:
+Three changes to the `stakeholder-report` capability:
 
 1. **Rename the report title to "Governance Pulse."** The technical identifier (`stakeholder-report`, file paths, command names) stays unchanged. Only the display title changes.
 
 2. **Add a `## Reading guide` section to the spec.** The reading guide defines — at the standard level — what each metric measures, what it means when it is healthy or concerning, and what action it should trigger. Adopters can extend or override the guide in their extension spec.
+
+3. **Ship a complete command template with the spec.** The spec includes a `command.md` artefact that `/adhere-to tooling` installs into the adopter's command directory. Adopters get a working Governance Pulse command with no manual implementation required.
 
 ## Rationale
 
@@ -139,6 +141,18 @@ The reading guide is standard-level but adopter-extensible. Adopters may:
 
 Removing a metric family's interpretation is not permitted — the reading guide is a floor, not a ceiling.
 
+### Change 3 — Command template and artefacts block
+
+The spec ships a complete, working command template at `specs/observability/stakeholder-report/command.md`.
+
+The template is installed into the adopter's command directory by `/adhere-to tooling` when the capability is active. An adopter who activates observability and runs `/adhere-to tooling` gets a working Governance Pulse command file with no further implementation required.
+
+The template includes: reading guide (embedded), risks section (reading from the catalogue), report structure, retry contract, and invocation log. Variables (`model`, `output_path`, `title`, `catalogue_path`, `organisation`, `thresholds`) are resolved from the adopter's manifest extension at install time, with sensible defaults for all.
+
+An adopter who needs org-specific behaviour (e.g. a different model string for a local gateway, a custom title, different thresholds) declares overrides in their observability capability extension — they do not edit the command file directly.
+
+This follows the principle: the standard provides complete, working tools. Adopters extend rather than implement.
+
 ## Acceptance scenarios
 
 ### Reader understands what a red ownership score means without asking
@@ -164,6 +178,14 @@ Then the reading guide distinguishes the maturity arc from neglect, and prompts 
 Given a spec that has not been edited in 180 days but the scope it describes has changed
 When the spec activity section is read
 Then the reading guide frames the question: is this stable or installed? The spec owner is named as the person to act.
+
+### Adopter gets working command with no manual implementation
+
+Given an adopter with observability active who bumps to v0.13.0 and runs `/adhere-to tooling`
+When the artefacts step runs
+Then `stakeholder-report.md` is installed in `.claude/commands/` with all variables resolved from the adopter's manifest
+And the command is immediately runnable with no further configuration
+And the generated report includes the reading guide and risks section
 
 ## Related
 
