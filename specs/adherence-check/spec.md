@@ -200,6 +200,17 @@ This check only runs when `risk-at-scope` is declared `active` in the adoption m
 - **`rag` not manually declared.** The `rag` field is derived; if present in the file it must not contradict the computed value (days open vs `escalation_threshold`). A mismatched `rag` emits a `warning`.
 - **Owner declared at scope.** The `owner` field must name a person declared in the scope's `people.md` or governance DACI. Unresolvable owner emits a `warning`.
 
+#### Against scope-registry
+
+*This check only runs when `scope-registry` is declared `active` in the adoption manifest.*
+
+- **Catalogue file present and fresh.** `governance/catalogue/scopes.yaml` must exist. Missing emits a `gap`. If the file exists but its `generated_at` timestamp is more than 25 hours old, emit a `warning` — the catalogue is stale and may not reflect the current repo state.
+- **Every governed scope has a catalogue entry.** Walk the repo for directories that are governed scopes (identified by the presence of any of: `spec.md`, `README.md`, `governance/`, `people.md`, `feedback.md`, or `decisions/`). Each such scope must have a corresponding entry in `scopes.yaml`. A scope absent from the catalogue emits a `gap`.
+- **`scope:` field references a valid registry entry.** For each artefact (risk record, project spec, or any frontmatter-bearing file) that carries a `scope:` field, the value must be a `<type>/<slug>` pair that resolves in `scopes.yaml`. An unresolvable value emits a `gap` at high severity.
+- **Programme-level risks declare `scope:`.** For each risk record found at the repo-root `risks/` path (programme-level risks, not scoped under a project), the frontmatter must include a `scope:` field. Missing emits a `gap` at medium severity.
+- **Artefacts do not point to closed scopes.** If a `scope:` field resolves to an entry whose lifecycle status is `closed`, emit a `warning` — the artefact references a scope that is no longer active. Closed-scope artefacts inside `projects/closed/` are excluded from this check.
+- **Scopes without a feedback inbox flagged.** Any entry in `scopes.yaml` where `feedback_inbox` is `null` or absent emits a `warning` addressed to the manifest owner — the scope has no declared channel for feedback.
+
 ## What adherence-check is not
 
 - **A fix tool.** It reports; it does not mutate. Fixes are authored through the [`capability-lifecycle`](../capability-lifecycle/spec.md) workflow.
