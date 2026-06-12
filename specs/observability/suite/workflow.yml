@@ -1,0 +1,238 @@
+# Observability Suite — standalone GHA workflow template.
+# Runs the six data-collection observability agents sequentially in one job.
+# Replaces the adopter's hand-maintained governance-observability.yml.
+#
+# Template variables substituted at adoption time by /adhere-to tooling:
+#   {{runner}}       — adopter-declared runs-on runner label
+#   {{schedule}}     — cron expression for the scheduled trigger
+#   {{model_haiku}}  — adopter-declared Haiku model id for the data-collection agents
+#
+# Trigger: schedule (cron) AND workflow_dispatch (manual on-demand trigger).
+#
+# Write scope: governance/observability/ only — enforced at three layers:
+#   1. write-scope pre-commit hook (refuses staging outside the path)
+#   2. prompt GUARDRAILS injected before each agent's prompt
+#   3. post-run write-scope validator (fails the job on any unexpected write)
+#
+# The governance-pulse report runs in a separate workflow (workflow_run-triggered
+# off this one's completion) — see ../governance-pulse/workflow.yml.
+
+name: Observability Suite
+
+on:
+  schedule:
+    - cron: '{{schedule}}'
+  workflow_dispatch: {}  # allow manual trigger from Actions UI
+
+jobs:
+  run-observability-suite:
+    runs-on: {{runner}}
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_BASE_URL: https://litellm.k8s.eu-west-1.non-prod.busuu.net
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          sparse-checkout: |
+            governance
+            clusters
+            functions
+            agreements
+            ai-factory
+            projects
+            cloudops
+            decision-intelligence
+            decisions
+            .claude/commands
+            .open-org-spec
+          # open-org-spec submodule intentionally excluded — agents must be self-contained.
+
+      - name: Install dependencies
+        run: sudo apt-get install -y curl jq
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Configure git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest (sync check)
+        id: sync
+        run: |
+          git pull --ff-only || echo "DIVERGED=true" >> $GITHUB_OUTPUT
+
+      - name: Record baseline SHA
+        id: baseline
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Install write-scope pre-commit hook
+        run: |
+          cat > .git/hooks/pre-commit << 'HOOK'
+          #!/bin/bash
+          BAD=$(git diff --cached --name-only | grep -vE '^governance/observability/' || true)
+          if [ -n "$BAD" ]; then
+            echo "pre-commit: refusing to commit files outside governance/observability/:"
+            echo "$BAD"
+            git restore --staged $BAD
+            exit 1
+          fi
+          HOOK
+          chmod +x .git/hooks/pre-commit
+
+      - name: Replace contributor guide with agent stub
+        run: echo "# Agent mode — governance enforced via workflow guardrails and hooks." > CLAUDE.md
+
+      # ── Helper pattern used by every agent step ──────────────────────────────
+      # Each step: config user.name → pull → extract PROMPT → run agent →
+      #            stage → commit if changed → push with retry → log on failure.
+
+      - name: Run /owner-health
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/owner-health"
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/owner-health.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: owner-health update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /owner-health | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: owner-health push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Run /inbox-health
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/inbox-health"
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/inbox-health.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: inbox-health update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /inbox-health | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: inbox-health push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Run /decision-health
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/decision-health"
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/decision-health.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: decision-health update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /decision-health | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: decision-health push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Run /contributor-activity
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/contributor-activity"
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/contributor-activity.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: contributor-activity update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /contributor-activity | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: contributor-activity push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Run /spec-activity
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/spec-activity"
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/spec-activity.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: spec-activity update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /spec-activity | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: spec-activity push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Run /risk-load
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git config --global user.name "observability-suite/risk-load"
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/risk-load.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/ only. NO fabrication. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_haiku}} --dangerously-skip-permissions
+          git add governance/observability/
+          git diff --cached --quiet || git commit -m "chore: risk-load update — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1; while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1)); [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /risk-load | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md && git commit -m "obs: risk-load push failure" && git push origin main || true
+            exit 1
+          fi
+
+      - name: Validate write scope
+        run: |
+          UNEXPECTED=$(git log "${{ steps.baseline.outputs.sha }}..HEAD" --author="observability-suite" --name-only --pretty=format: 2>/dev/null \
+            | grep -v '^$' | sort -u \
+            | grep -vE '^governance/observability/(owner-load\.md|inbox-load\.md|decision-health\.md|contributor-activity\.md|spec-touch\.md|risk-load\.md|spec-health/)' \
+            || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "SECURITY: observability-suite wrote to unexpected files:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi

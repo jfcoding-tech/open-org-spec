@@ -2,7 +2,7 @@
 description: Generate the Governance Pulse — a self-contained HTML stakeholder governance report from observability outputs
 owner: Javier Fernandez
 canonical_spec: open-org-spec/specs/observability/governance-pulse/spec.md
-canonical_spec_version: "0.12.0"
+canonical_spec_version: "{{canonical_spec_version}}"
 execution_context: claude-code
 ---
 
@@ -28,26 +28,30 @@ Default variable values (substituted by `/adhere-to tooling` from the adopter's 
 
 ### Step 0 — Pre-flight
 
-Before reading any file, verify the five upstream output files exist. If any are absent, continue with a `—` placeholder for that section's metrics — do not abort. Note which files were missing in the footer of the generated report.
+Before reading any file, verify the six upstream output files exist. If any are absent, continue with a `—` placeholder for that section's metrics — do not abort. Note which files were missing in the footer of the generated report.
 
 Required files:
-- `governance/observability/owner-health.md`
-- `governance/observability/inbox-health.md`
+- `governance/observability/owner-load.md`
+- `governance/observability/inbox-load.md`
 - `governance/observability/decision-health.md`
-- `governance/observability/contributor-usage.md`
-- `governance/observability/spec-activity.md`
+- `governance/observability/contributor-activity.md`
+- `governance/observability/spec-touch.md`
+- `governance/observability/risk-load.md`
 
 ### Step 1 — Read all observability output files
 
 Read the following files in full:
 
-1. `governance/observability/owner-health.md`
-2. `governance/observability/inbox-health.md`
+1. `governance/observability/owner-load.md`
+2. `governance/observability/inbox-load.md`
 3. `governance/observability/decision-health.md`
-4. `governance/observability/contributor-usage.md`
-5. `governance/observability/spec-activity.md`
+4. `governance/observability/contributor-activity.md`
+5. `governance/observability/spec-touch.md`
+6. `governance/observability/risk-load.md` (if absent, fall back to `governance/catalogue/risks.yaml`, then `governance/risk-registry.yaml`)
 
 Each file carries a `generated:` timestamp in its front-matter or header. Record the timestamp for each file — render it per section in the report so readers know which dimensions are fresh and which are from a prior run.
+
+If a file is missing or contains no timestamp, render that section with `—` for all metrics and a note: "Data not yet available — run the relevant observability command to generate."
 
 ### Step 2 — Read catalogue for ownership coverage
 
@@ -62,42 +66,34 @@ Also read `{{catalogue_path}}/scopes.yaml` if present to enumerate scope names f
 
 Flag amber if below {{ownership_coverage_threshold}}%.
 
-### Step 3 — Compute time-to-decision metrics
+### Step 3 — Read decision metrics from pre-generated file
 
-Walk decision records in the following glob paths:
-- `decisions/*.md`
-- `clusters/*/decisions/*.md`
-- `functions/*/decisions/*.md`
-- `ai-factory/decisions/*.md`
-- `projects/*/decisions/*.md`
-- `decision-intelligence/decisions/*.md`
-
-For each decision file:
-- Extract the date from the filename (format: `YYYY-MM-DD-*`).
-- Scan the file for a `decided_at:` or `**Decided:**` field (YAML front-matter or inline markdown).
-- If `decided_at` is present: compute `days_to_decide = decided_at − filename_date`.
-- If no `decided_at` and `Status: proposed` (or equivalent open status): compute `days_open = today − filename_date`. Flag as stale if `days_open > {{stale_decision_threshold}}`.
-
-Report:
+Read `governance/observability/decision-health.md` in full. Extract from its content:
 - Total decisions
 - Status mix (count by status value)
 - Stale proposed decisions (>{{stale_decision_threshold}} days open)
-- Median time-to-decision (for decisions with `decided_at`)
-- Most-cited decision (highest number of inbound links — scan other markdown files for links to `decisions/` paths; use `—` if not computable)
+- Median time-to-decision
+- Most-cited decision (use `—` if not present in the file)
 
-Use `—` for any metric that cannot be computed from source files.
+If `governance/catalogue/decisions.yaml` is present, also read it to cross-check total decision count.
 
-### Step 4 — Read feedback files for responsiveness metrics
+Use `—` for any metric that cannot be read from the pre-generated file. Do **not** walk raw decision files directly.
 
-Walk all `**/feedback.md` files across the repository (exclude `governance/observability/` sub-files).
+If `decision-health.md` is absent or contains no timestamp, render the Decision velocity section with `—` for all metrics and a note: "Data not yet available — run /decision-health to generate."
 
-For each file:
-- Count open entries: headings with date pattern (`## YYYY-MM-DD`) that have no `[resolved YYYY-MM-DD]` marker anywhere in their entry block.
-- Count resolved entries in the last 30 days: entries where the resolved date is within 30 days of today.
-- Count abandoned entries: open entries where `today − entry_date > 30`.
-- Identify highest-load addressee: the person name appearing most frequently in unresolved `**To:**` or `**Addressee:**` or `> @` fields.
+### Step 4 — Read feedback responsiveness metrics from pre-generated file
 
-If `governance/observability/inbox-health.md` already summarises these counts, prefer those values and note the source.
+Read `governance/observability/inbox-load.md` in full. Extract from its content:
+- Total open entries
+- Stale entries (>14 days unresolved)
+- Abandoned entries (>30 days unresolved)
+- Recently resolved (last 14 days)
+- Highest-load addressee (person with most unresolved entries)
+- Open entries by addressee (for chart data, top 6)
+
+Do **not** walk `**/feedback.md` files directly across the repository. All inbox metrics must be read exclusively from `governance/observability/inbox-load.md`.
+
+If `inbox-load.md` is absent or contains no timestamp, render the Inbox responsiveness section with `—` for all metrics and a note: "Data not yet available — run /inbox-load to generate."
 
 ### Step 5 — Compute the 6 metric groups
 
@@ -125,7 +121,7 @@ If `governance/observability/inbox-health.md` already summarises these counts, p
 **Group 4 — Contributor engagement**
 - Active / session-only / no-activity counts
 - Engagement rate (active ÷ total)
-- Report `—` for all if `contributor-usage.md` is a placeholder or absent
+- Report `—` for all if `contributor-activity.md` is a placeholder or absent
 
 **Group 5 — Spec surface health (lived-in ratio)**
 - Total specs
@@ -138,7 +134,7 @@ If `governance/observability/inbox-health.md` already summarises these counts, p
 - Top-edited spec
 
 **Group 6 — Risk health**
-- Read `{{catalogue_path}}/risks.yaml` (or `governance/catalogue/risks.yaml` as fallback, then `governance/risk-registry.yaml`)
+- Read `governance/observability/risk-load.md` (fall back to `governance/catalogue/risks.yaml`, then `governance/risk-registry.yaml` if absent)
 - Total risks in registry
 - Open risks (`status: open`)
 - RED risks (open with `rag: RED`)
@@ -270,7 +266,9 @@ This report is generated from the organisation's written operating model — the
 
 Section heading: **Accountability coverage**
 Sub-heading: *Does every piece of work have a named lead?*
-Data freshness label: "Data from owner-health.md · last generated: [timestamp from file]"
+Data freshness label: "Data from owner-load.md · last generated: [timestamp from file]"
+
+If `owner-load.md` is absent or has no timestamp, render all ownership metrics as `—` and show: "Data not yet available — run /owner-load to generate."
 
 Stat blocks (horizontal row of 4):
 1. Coverage % with badge (amber if < {{ownership_coverage_threshold}}%)
@@ -309,6 +307,8 @@ Section heading: **Decision velocity**
 Sub-heading: *Are decisions being made fast enough to unblock delivery?*
 Data freshness label: "Data from decision-health.md · last generated: [timestamp from file]"
 
+If `decision-health.md` is absent or has no timestamp, render all decision metrics as `—` and show: "Data not yet available — run /decision-health to generate."
+
 Stat blocks (horizontal row of 4):
 1. Total decisions
 2. Stale proposed (amber badge if > 0)
@@ -333,7 +333,9 @@ If stale proposed > 0: render a table of stale decisions with columns: Decision 
 
 Section heading: **Inbox responsiveness**
 Sub-heading: *Is feedback flowing freely across team boundaries?*
-Data freshness label: "Data from inbox-health.md · last generated: [timestamp from file]"
+Data freshness label: "Data from inbox-load.md · last generated: [timestamp from file]"
+
+If `inbox-load.md` is absent or has no timestamp, render all inbox metrics as `—` and show: "Data not yet available — run /inbox-load to generate."
 
 Stat blocks (horizontal row of 4):
 1. Total open entries
@@ -365,7 +367,9 @@ Horizontal bar chart — inline SVG:
 
 Section heading: **Contribution trend**
 Sub-heading: *Is the org's operating knowledge being made explicit and kept current?*
-Data freshness label: "Data from contributor-usage.md · last generated: [timestamp from file]"
+Data freshness label: "Data from contributor-activity.md · last generated: [timestamp from file]"
+
+If `contributor-activity.md` is absent or has no timestamp, render all contributor metrics as `—` and show: "Data not yet available — run /contributor-activity to generate."
 
 Stat blocks (horizontal row of 4):
 1. Active contributors count
@@ -373,7 +377,7 @@ Stat blocks (horizontal row of 4):
 3. No-activity count (amber badge if > 50% of total)
 4. Engagement rate %
 
-If contributor-usage.md is a placeholder: render a single card "Contributor data not yet available — run /contributor-activity to generate." with all stats as `—`.
+If `contributor-activity.md` is absent, a placeholder, or has no timestamp: render a single card "Contributor data not yet available — run /contributor-activity to generate." with all stats as `—`.
 
 **Reading guide for this section:**
 
@@ -393,7 +397,9 @@ If contributor-usage.md is a placeholder: render a single card "Contributor data
 
 Section heading: **Spec activity**
 Sub-heading: *Does the written description of how we work still reflect reality?*
-Data freshness label: "Data from spec-activity.md · last generated: [timestamp from file]"
+Data freshness label: "Data from spec-touch.md · last generated: [timestamp from file]"
+
+If `spec-touch.md` is absent or has no timestamp, render all spec activity metrics as `—` and show: "Data not yet available — run /spec-touch to generate."
 
 Stat blocks (horizontal row of 4):
 1. Total specs
@@ -419,7 +425,9 @@ If top-edited spec or abandoned specs are available: render them as named items 
 
 Section heading: **Risk health**
 Sub-heading: *Are risks known, owned, and being actioned?*
-Data freshness label: "Data from {{catalogue_path}}/risks.yaml · last generated: [timestamp from file if present]"
+Data freshness label: "Data from risk-load.md · last generated: [timestamp from file]"
+
+If `risk-load.md` is absent, fall back to `governance/catalogue/risks.yaml` then `governance/risk-registry.yaml`. If no risk source is found, render all risk metrics as `—` and show: "Data not yet available — run /risk-load to generate, or activate the risk-at-scope capability."
 
 Stat blocks (horizontal row of 5):
 1. Total risks in registry
@@ -553,7 +561,7 @@ A sixth dimension — risk visibility — detects whether known risks are owned 
 ```html
 <footer>
   <p><strong>Generated:</strong> [FULL TIMESTAMP WITH TIMEZONE]</p>
-  <p><strong>Source files:</strong> governance/observability/owner-health.md (generated: [ts]) · inbox-health.md (generated: [ts]) · decision-health.md (generated: [ts]) · contributor-usage.md (generated: [ts]) · spec-activity.md (generated: [ts])</p>
+  <p><strong>Source files:</strong> governance/observability/owner-load.md (generated: [ts]) · inbox-load.md (generated: [ts]) · decision-health.md (generated: [ts]) · contributor-activity.md (generated: [ts]) · spec-touch.md (generated: [ts]) · risk-load.md (generated: [ts or MISSING])</p>
   <p><strong>Missing files:</strong> [list any files from Step 0 that were absent, or "none"]</p>
   <p>Not for external distribution. Internal governance report for {{organisation}}.</p>
 </footer>
@@ -618,10 +626,10 @@ Metrics snapshot:
   Open risks:             <n> total (<n> RED, <n> AMBER, <n> unowned) [HEALTHY|WARNING|CRITICAL]
 
 Source freshness:
-  owner-health.md:       generated <timestamp or MISSING>
-  inbox-health.md:       generated <timestamp or MISSING>
-  decision-health.md:    generated <timestamp or MISSING>
-  contributor-usage.md:  generated <timestamp or MISSING>
-  spec-activity.md:      generated <timestamp or MISSING>
-  risks.yaml:            generated <timestamp or MISSING>
+  owner-load.md:          generated <timestamp or MISSING>
+  inbox-load.md:          generated <timestamp or MISSING>
+  decision-health.md:     generated <timestamp or MISSING>
+  contributor-activity.md: generated <timestamp or MISSING>
+  spec-touch.md:          generated <timestamp or MISSING>
+  risk-load.md:           generated <timestamp or MISSING>
 ```

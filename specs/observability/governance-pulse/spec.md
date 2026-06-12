@@ -296,7 +296,29 @@ artefacts:
         source: config.yaml#capabilities.observability.ownership_coverage_threshold
         default: "80"
     check:
-      type: file_exists
+      type: file_contains
+      value: 'canonical_spec_version: "{{canonical_spec_version}}"'
+  - id: governance-pulse-workflow
+    type: file
+    path: .github/workflows/governance-pulse.yml
+    template: specs/observability/governance-pulse/workflow.yml
+    variables:
+      - name: runner
+        source: config.yaml#capabilities.observability.runner
+        default: ubuntu-latest
+      - name: model_sonnet
+        source: config.yaml#capabilities.observability.model
+        default: claude-sonnet-4-6
+      - name: schedule
+        source: config.yaml#capabilities.observability.governance_pulse.schedule
+        default: "0 4 * * *"
+    check:
+      type: file_contains
+      value: "governance-pulse-workflow"
+    condition:
+      type: config_equals
+      config_path: capabilities.observability.automated_refresh.implementation
+      equals: github-actions
 ```
 
 ---

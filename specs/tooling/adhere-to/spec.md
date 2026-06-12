@@ -14,6 +14,22 @@ Without a conformance pass, an adopter activates the capability and immediately 
 
 The `adhere-to` tool brings the repo and the manifest into agreement: it walks the affected areas, lists every gap, and routes each one to the person responsible. The adopter then either conforms or accepts each gap as a known follow-up recorded in the manifest. The tool does not unilaterally edit content — it surfaces work for the affected owners to do.
 
+## Install-time expansion pattern
+
+The standard separates **install time** from **runtime**, and `adhere-to` is the only tool that operates at install time.
+
+- **Install time** is when `adhere-to` runs (at activation, or on a re-run). At install time `adhere-to` reads the capability specs, templates, the adoption manifest, and the capability extensions; it resolves every `{{variable}}` point in a template against those sources; and it writes the fully-expanded result into the adopter repo (commands, hooks, configuration files, relays).
+- **Runtime** is every other moment — when a contributor's agent acts on a normal task and runs an installed command or hook.
+
+The contract that follows from this separation:
+
+- **`{{variable}}` points in templates are resolved at install time by `adhere-to`, never at runtime.** A template (under `open-org-spec/`) contains `{{variable}}` placeholders; the installed artefact in the adopter repo contains the resolved values. By the time any other agent reads the installed artefact, no `{{variable}}` remains — the expansion already happened.
+- **Agents must never read from `open-org-spec/` or `.open-org-spec/extensions/` at runtime.** Everything an installed command or hook needs to execute is expanded into it at install time. The standard directory and the extension files are install-time inputs only.
+- **Extension files provide configuration values only; execution logic lives in the template.** An extension under `.open-org-spec/extensions/` supplies an adopter's values (paths, names, severity model, routing overrides) that `adhere-to` substitutes into a template at install time. It does not carry behaviour that an agent is meant to interpret at runtime. The logic of *what the command does* is in the template; the extension only parameterises it.
+- **Reading from extension files at runtime is a conformance violation.** If an installed command or an agent reaches back into `open-org-spec/` or `.open-org-spec/extensions/` while performing a normal task — rather than relying on the values already expanded into the installed artefact — that is a defect to be flagged, not an accepted pattern. It re-couples runtime behaviour to the standard directory, defeats install-time expansion, and breaks for any adopter who vendors the standard differently. `adhere-to` surfaces such a reach as a gap on its next run.
+
+The practical rule: if a value can change between adopters, it is a `{{variable}}` resolved at install time and baked into the installed artefact — it is not something an agent looks up at runtime.
+
 ## Pattern
 
 ### Inputs
@@ -120,8 +136,9 @@ artefacts:
                 | standard#manifest_dir                        # directory containing config.yaml
                 | standard#git_hooks_dir                       # git config core.hooksPath, defaulting to .git/hooks
     check:
-      type: file_exists | file_executable | file_contains | directory_exists | gitignore_entry | gitattributes_entry
+      type: file_contains | file_exists | file_executable | directory_exists | gitignore_entry | gitattributes_entry
       value: <string>                                           # supports {{variable_name}}; required for file_contains, gitignore_entry, and gitattributes_entry
+                                                                # version sentinel: 'canonical_spec_version: "{{canonical_spec_version}}"'
     condition:                                                  # optional — skip artefact if condition is false
       type: config_equals | scan_frontmatter
       # config_equals: check a config.yaml field
@@ -143,6 +160,34 @@ artefacts:
 
 **Variable substitution** applies to `path`, template file content, and `check.value` — wherever `{{variable_name}}` appears.
 
+**Check types:**
+
+| `check.type` | Passes when | `value` required |
+|---|---|---|
+| `file_exists` | a file exists at `path` | no |
+| `file_executable` | a file exists at `path` and has executable permission (Unix) | no |
+| `file_contains` | the file at `path` exists **and** contains the resolved `value` as a literal substring | yes |
+| `directory_exists` | a directory exists at `path` | no |
+| `gitignore_entry` | `.gitignore` already contains the resolved `value` | yes |
+| `gitattributes_entry` | `.gitattributes` already contains the resolved `value` | yes |
+
+**The version sentinel (`file_contains`).** `file_contains` is the check type that detects an *outdated* installed artefact, not merely a missing one. `file_exists` cannot tell a stale install from a current one — the file is present either way. To version an installed artefact, an artefact entry sets:
+
+```yaml
+check:
+  type: file_contains
+  value: 'canonical_spec_version: "{{canonical_spec_version}}"'
+```
+
+where `canonical_spec_version` is a variable resolved at install time (from the capability spec or the manifest) to the version `adhere-to` is currently installing. The template that produces the artefact embeds the same `canonical_spec_version: "{{canonical_spec_version}}"` line, so a freshly installed artefact carries the version stamp of the install that wrote it.
+
+On a later run:
+
+- If the installed file contains `canonical_spec_version: "<current>"`, the check passes — the artefact is current. Skip.
+- If the file is absent, or present but contains a *different* (older) version string — or no version line at all — the check fails. `adhere-to` treats this as an **outdated installed file** and **reinstalls** it (Step 4, `type: file`), rewriting it from the template with the current version baked in.
+
+This is what closes the loop on install-time expansion: when the standard moves forward, the installed artefacts no longer match the current version sentinel, `adhere-to` detects the mismatch, and reinstalls the freshly expanded artefact — without any agent reaching back into `open-org-spec/` at runtime.
+
 #### How `adhere-to` processes artefacts
 
 For each entry in the `artefacts` block:
@@ -151,9 +196,9 @@ For each entry in the `artefacts` block:
 2. **Evaluate condition.** If a `condition` is declared:
    - `config_equals` — read the value at `config_path` in `config.yaml`. Skip if it does not equal `equals`.
    - `scan_frontmatter` — scan files in `directory` for any file containing `frontmatter_field` in its frontmatter. Skip the artefact if none found.
-3. **Check.** Apply the `check` rule against the adopter repo. If the check passes, the artefact is conformant — skip.
+3. **Check.** Apply the `check` rule against the adopter repo. If the check passes, the artefact is conformant — skip. With `file_contains` carrying a version sentinel, "passes" means present *and* current; a present-but-outdated file fails the check and is reinstalled in step 4.
 4. **Scaffold.** If the check fails:
-   - `type: file` — write the template (with variable substitution) to `path`. After writing: if `check.type` is `file_executable`, set executable permission (`chmod +x` on Unix). On Windows, note that executable permission does not apply but git will invoke the hook via its bundled bash regardless.
+   - `type: file` — write the template (with variable substitution) to `path`, overwriting any outdated file already there. This is the reinstall path triggered when a `file_contains` version sentinel no longer matches. After writing: if `check.type` is `file_executable`, set executable permission (`chmod +x` on Unix). On Windows, note that executable permission does not apply but git will invoke the hook via its bundled bash regardless.
    - `type: gitignore_entry` — append the resolved `check.value` to `.gitignore` if not present.
    - `type: gitattributes_entry` — append the resolved `check.value` to `.gitattributes` if not present.
    - `type: directory` — create the directory at `path` if absent.

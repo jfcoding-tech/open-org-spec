@@ -31,7 +31,7 @@ A conformant repo can be observed through the following families. Each family co
 - **Cross-flow** — derived from cross-references and `feedback.md` files. Surfaces feedback inbox aging, capabilities graduated from projects, decisions cited from other scopes.
 - **Adoption** — derived from adopter manifests (`.open-org-spec/config.yaml` per adopter). Surfaces which capabilities each adopter has activated, which extension points each adopter has filled in, drift between the standard's current spec and an adopter's frozen `standard_version`.
 
-The families are reference points, not a closed set. New families that earn their place by being broadly useful are added by revision to this capability. Tools graduate one family at a time — `/owner-health` is the first instance of people involvement; later tools cover the others.
+The families are reference points, not a closed set. New families that earn their place by being broadly useful are added by revision to this capability. Tools graduate one family at a time — `/owner-health` is the first instance of people involvement; `/risk-load` is the first instance of risk health; later tools cover the others.
 
 ### Shape of an observability tool
 
@@ -83,7 +83,7 @@ A tool created by a single team for their own use may start as a project-local a
 
 - **Push-based observability.** Scheduled jobs, PR-time checks, notification bots, merge blockers. These are layer-2 — they read the same conventions but act on the data. The standard codifies the pull layer first; push behaviours graduate independently once the pull layer is settled.
 - **Specific threshold values.** "Stale" is adopter-dependent. The standard names the concept and the extension point; the adopter picks the number.
-- **A complete spec per metric family.** This spec names six families. Each family earns its own dedicated tool spec when an instance graduates. People involvement is the first via `owner-health/spec.md`.
+- **A complete spec per metric family.** This spec names six families. Each family earns its own dedicated tool spec when an instance graduates. People involvement is the first via `owner-health/spec.md`; risk health is covered by `risk-load/spec.md`.
 - **Whether outputs are committed to git.** The standard recommends committing (visibility is the point) but does not require it. An adopter who prefers git-ignored generation declares so in the extension.
 - **Cross-adopter aggregation.** A meta-tool that reads multiple adopters' manifests and reports adoption metrics across them is conceptually part of this capability but lives outside any single adopter's repo. Out of scope for v0.
 
@@ -110,6 +110,7 @@ Worked example: an adopter writes the capability extension at `.open-org-spec/ex
 ## Related
 
 - [`./owner-health/spec.md`](./owner-health/spec.md) — first tool: people-involvement aggregation.
+- [`./risk-load/spec.md`](./risk-load/spec.md) — sixth tool: risk-health aggregation. Reads `governance/catalogue/risks.yaml` and `scopes.yaml`; produces `risk-load.md` with risk health by scope and by owner; surfaces unowned risks and overdue dispositions.
 - [`../tooling/spec.md`](../tooling/spec.md) — sibling capability. Observability is *what* gets measured; tooling is *how* tools are wired. A specific observability tool is governed by both — its content by observability, its delivery by tooling.
 - [`../people/spec.md`](../people/spec.md) — people-involvement metrics depend on the people-at-scope shape. Optional dependency: tools degrade gracefully when this capability is not active by reading role headers verbatim.
 - [`../governance-at-scope/spec.md`](../governance-at-scope/spec.md) — scope hierarchy is what observability walks.

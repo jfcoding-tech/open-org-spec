@@ -1,0 +1,94 @@
+name: Governance Pulse
+
+on:
+  workflow_run:
+    workflows:
+      - "{{schedule}}"
+    types:
+      - completed
+  workflow_dispatch: {}
+
+jobs:
+  governance-pulse:
+    runs-on: {{runner}}
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_BASE_URL: https://litellm.k8s.eu-west-1.non-prod.busuu.net
+
+    steps:
+      - name: Checkout repo (sparse — observability outputs + command only)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          sparse-checkout: |
+            governance
+            .claude/commands
+            .open-org-spec
+
+      - name: Install dependencies
+        run: sudo apt-get install -y curl jq
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Configure git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "governance-pulse"
+
+      - name: Pull latest (sync check)
+        id: sync
+        run: |
+          git pull --ff-only || echo "DIVERGED=true" >> $GITHUB_OUTPUT
+
+      - name: Record baseline SHA
+        id: baseline
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run /governance-pulse
+        if: steps.sync.outputs.DIVERGED != 'true'
+        run: |
+          git pull --ff-only || true
+          PROMPT=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{p=0;next} !p' .claude/commands/governance-pulse.md)
+          GUARDRAILS="GUARDRAILS: WRITE to governance/observability/governance-pulse.html only. NO fabrication — all values from governance/observability/*.md and governance/catalogue/*.yaml. EXIT on uncertainty — log to governance/observability/spec-health/agent-warnings.md. Do NOT read open-org-spec/."
+          claude -p "${GUARDRAILS} ${PROMPT}" --model {{model_sonnet}} --dangerously-skip-permissions
+          git add governance/observability/governance-pulse.html 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: governance-pulse report — $(date -u '+%Y-%m-%d')"
+          ATTEMPT=1
+          while [ $ATTEMPT -le 3 ]; do
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && break
+            ATTEMPT=$((ATTEMPT + 1))
+            [ $ATTEMPT -le 3 ] && sleep 30
+          done
+          if [ $ATTEMPT -gt 3 ]; then
+            echo "- $(date -u '+%Y-%m-%d %H:%M') UTC | /governance-pulse | push exhausted" >> governance/observability/spec-health/agent-failures.md
+            git add governance/observability/spec-health/agent-failures.md \
+              && git commit -m "obs: governance-pulse push failure" \
+              && git push origin main || true
+            exit 1
+          fi
+
+      - name: Validate write scope
+        run: |
+          UNEXPECTED=$(git log "${{ steps.baseline.outputs.sha }}..HEAD" \
+            --author="governance-pulse" \
+            --name-only --pretty=format: 2>/dev/null \
+            | grep -v '^$' | sort -u \
+            | grep -vE '^governance/observability/(governance-pulse\.html|spec-health/)' \
+            || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "SECURITY: governance-pulse wrote to unexpected files:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
