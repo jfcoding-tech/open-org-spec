@@ -309,9 +309,10 @@ artefacts:
       - name: model_sonnet
         source: config.yaml#capabilities.observability.model
         default: claude-sonnet-4-6
-      - name: schedule
-        source: config.yaml#capabilities.observability.governance_pulse.schedule
-        default: "0 4 * * *"
+      - name: triggering_workflow
+        source: config.yaml#capabilities.observability.governance_pulse.triggering_workflow
+        default: "Spec-Health"
+        description: "Name of the workflow that generates the catalogue (the name: field in its YAML). Governance Pulse triggers after this workflow completes."
     check:
       type: file_contains
       value: "governance-pulse-workflow"

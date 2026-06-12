@@ -3,7 +3,7 @@ name: Governance Pulse
 on:
   workflow_run:
     workflows:
-      - "{{schedule}}"
+      - "{{triggering_workflow}}"
     types:
       - completed
   workflow_dispatch: {}
