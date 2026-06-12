@@ -34,18 +34,20 @@ Addition to the `risk-at-scope` capability: one new field in the risk record sch
 
 | Field | Required | Meaning |
 |---|---|---|
-| `scope` | Required for `risks/` (repo root); optional elsewhere | The scope path this risk belongs to. Used by the risk scanner to determine the target feedback inbox. Format: relative path from repo root to the scope root (e.g. `clusters/product-development`, `functions/revenue`, `projects/agentic-coach-phase-3`). |
+| `scope` | Required for `risks/` (repo root); optional elsewhere | A scope reference in `<type>/<slug>` format declaring which scope this risk belongs to. Used by the risk scanner to resolve the target feedback inbox via the scope registry. Examples: `cluster/product-development`, `function/revenue`, `project/agentic-coach-phase-3`, `programme`. |
+
+**Scope reference format.** The value follows the `scope-registry` capability's `<type>/<slug>` format. Types: `cluster`, `function`, `project`, `module`, `programme`. The `programme` type has no slug — use `programme` alone for cross-cutting risks that belong to no single scope.
 
 **Routing precedence.** The scanner uses:
-1. `scope` field if present — route to `<scope>/feedback.md`
-2. File path inference if `scope` absent — route to the feedback inbox inferred from the `risks/` folder's parent path
+1. `scope` field if present — resolve via `governance/catalogue/scopes.yaml` (scope registry), route to the resolved `feedback_inbox`
+2. File path inference if `scope` absent — infer from the `risks/` folder's parent path
 3. Fall back to `governance/feedback.md` with a `[scope-unresolved]` warning if neither produces a valid inbox
 
-**Scope value format.** A relative path from the repo root to the scope folder, without leading `./` or trailing `/`. Examples: `clusters/product-development`, `functions/revenue`, `projects/agentic-coach-phase-3`. The scanner resolves `<scope>/feedback.md` directly.
-
 **Validation.** `/adhere-to risk-at-scope` checks:
-- Any risk in `risks/` (repo root) that lacks a `scope` field is a conformance gap — surfaced as `medium` severity.
-- Any `scope` value that does not resolve to an existing `feedback.md` is a conformance gap — surfaced as `high` severity.
+- Any risk in `risks/` (repo root) that lacks a `scope` field is a conformance gap — `medium` severity.
+- Any `scope` value that does not resolve in the scope registry catalogue is a conformance gap — `high` severity.
+
+**Dependency.** The `scope` field resolution requires the `scope-registry` capability to be active (so `governance/catalogue/scopes.yaml` exists). If the scope registry is not active, the scanner falls back to path inference and logs a `[scope-registry-inactive]` warning.
 
 ### Impact on the risk scanner
 
@@ -58,7 +60,7 @@ The routing table entry for `risks/` (repo root) changes from:
 to:
 
 ```
-| `risks/` (repo root) | `<risk.scope>/feedback.md` — required; warn and fall back to governance/feedback.md if absent |
+| `risks/` (repo root) | Resolved from risk.scope via scope registry — required; fall back to governance/feedback.md with warning if absent or unresolvable |
 ```
 
 All other routing table entries are unchanged.
@@ -111,4 +113,5 @@ And the fact that Yaiza also leads `clusters/governance` does not affect routing
 
 - `specs/risk-at-scope/spec.md` — the capability this field extends; risk record schema
 - `specs/risk-at-scope/scanner.md` — the tool that consumes the `scope` field for routing
-- `proposals/people-catalogue.md` — companion proposal; the people catalogue answers org-structure queries; routing uses `risk.scope` not person → scope inference
+- `proposals/scope-registry.md` — required companion; defines the `<type>/<slug>` format and the `scopes.yaml` catalogue that resolves scope references to feedback inboxes
+- `proposals/people-catalogue.md` — parallel catalogue; people entries reference scopes using the same `type/slug` format
