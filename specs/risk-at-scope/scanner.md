@@ -32,7 +32,24 @@ For each `open` risk in the registry, evaluate:
 
 A risk that has been breached AND has no recent dedup entry is eligible for escalation.
 
-### Step 3 — Resolve routing target
+### Step 3 — Log conformance check
+
+For each risk in the registry where `status` is not `closed` or `resolved`:
+
+1. Read the risk file body from disk.
+2. Check that a `## Log` section exists.
+3. If `disposition_at` is set: parse `### YYYY-MM-DD —` heading lines in the `## Log` section and check that at least one matches `disposition_at` exactly.
+
+Write a conformance request to the resolved `feedback.md` (using the same routing logic as Step 4) for each violation found:
+
+- **`[log-absent]`** — the `## Log` section is missing entirely. Entry text: "`<id>` (`<title>`) has no `## Log` section. Add a `## Log` section with a dated entry for each disposition action."
+- **`[log-missing]`** — `disposition_at` is set but no `## Log` entry exists for that date. Entry text: "`<id>` (`<title>`) has `disposition_at: <date>` but no `## Log` entry dated `<date>`. Add a `### <date> — <author> — <change type>` entry explaining what was decided."
+
+Apply the same dedup logic as Step 2: if a `[log-absent]` or `[log-missing]` entry for this risk already exists in the target `feedback.md` within the dedup window, skip.
+
+`closed` and `resolved` risks are exempt — their log is frozen and not validated.
+
+### Step 4 — Resolve routing target
 
 Before writing, determine which `feedback.md` to route the disposition request to:
 
@@ -56,7 +73,7 @@ Before writing, determine which `feedback.md` to route the disposition request t
 | `clusters/`, `functions/`, `projects/`, etc. | `scope` field → `governance/catalogue/scopes.yaml` → `feedback_inbox`; fall back to path inference if `scope` absent |
 | `risks/` (repo root) | Resolved from `risk.scope` via `governance/catalogue/scopes.yaml` — required; fall back to `governance/feedback.md` with `[scope-unresolved]` warning if absent or not found in registry |
 
-### Step 4 — Write disposition requests
+### Step 5 — Write disposition requests
 
 For each eligible risk, write a disposition request entry to the resolved `feedback.md`:
 
@@ -80,7 +97,7 @@ If the risk has multiple owners, write a separate entry addressed to each owner 
 
 If the target `feedback.md` does not exist, create it with a minimal two-line header before appending.
 
-### Step 5 — Log invocation
+### Step 6 — Log invocation
 
 Append to the adopter-declared invocation log:
 
@@ -88,7 +105,7 @@ Append to the adopter-declared invocation log:
 YYYY-MM-DD HH:MM UTC | /risk-scanner | files_read: N | catalogue_assisted: true | outcome: success/fail | spec_version: <version>
 ```
 
-`catalogue_assisted: true` because the scanner reads the risk registry (the risk catalogue) rather than walking `risks/` folders directly.
+`catalogue_assisted: true` because the scanner reads the risk registry (the risk catalogue) rather than walking `risks/` folders directly. `files_read` counts the registry file plus each individual risk file read during the log conformance check (Step 3).
 
 ---
 

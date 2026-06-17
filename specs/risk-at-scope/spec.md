@@ -37,6 +37,34 @@ A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` f
 
 **Representation is extension-overridable.** The YAML frontmatter shown above is the default. Adopters may declare a different header form in their extension spec, provided every required field remains present, addressable, and named in the extension's mapping. The capability requires the fields, not the syntactic form. Adding, renaming, or removing required fields is not authorised by this override — only the form changes; the contract does not.
 
+### Required body sections
+
+In addition to the YAML frontmatter, a conformant risk record must contain:
+
+**`## Log`** — An append-only section recording every change to the risk's disposition. Each entry uses the strict heading format:
+
+```
+### YYYY-MM-DD — <author name> — <change type>
+```
+
+`<change type>` is one of: `confirmed open` | `status changed to <value>` | `owner changed to <name>` | `disposition date updated`.
+
+The entry body is free text explaining what was found, what was decided, and why. Minimum: one sentence. The section header and heading format are machine-parseable; do not vary them.
+
+A `## Log` entry is **required** whenever `disposition_at`, `status`, or `owner` changes. The entry date must match the new `disposition_at` value exactly.
+
+Example:
+
+```markdown
+## Log
+
+### 2026-06-17 — Jane Smith — confirmed open
+Reviewed. Risk is still live. Mitigation plan in progress. Not ready to defer.
+
+### 2026-06-03 — Jane Smith — status changed to open
+Risk created.
+```
+
 ## RAG derivation
 
 `rag` is **derived, never manually declared.** It is a function of `status`, the days elapsed since the risk's creation date (the date in the filename), and the `escalation_threshold`. Let `age` be the number of days since creation:
@@ -51,10 +79,10 @@ Because the value is derived, the `rag` field recorded in a file is a cached sna
 
 A risk opens at `open` and moves to exactly one terminal disposition. The transition gates:
 
-- **`open → deferred`** — a conscious decision to revisit later. Requires a **lightweight disposition record** in `decisions/` at the scope: decider, rationale, review trigger, and `decided_at`. `disposition_decision_ref` should point to it. Deferral is reversible only by creating a new risk, not by reopening (see below).
-- **`open → accepted`** — the scope decides to live with the risk. Requires a **full ADR** in `decisions/` at the scope: DACI, rationale, and `decided_at`. `disposition_decision_ref` is **required** and points to the ADR. This transition **requires [`governance-at-scope`](../governance-at-scope/spec.md) OR [`project`](../project/spec.md) active at the scope** — acceptance is a decision-authority act.
-- **`open → mitigated`** — the risk was resolved by a project decision or action. The risk traces to that resolution: `disposition_decision_ref` points to the project decision, ADR, or action record that closed the exposure.
-- **`open → closed`** — administrative closure (the risk no longer applies; the context changed; it was a duplicate). A `disposition_at` date and an optional note suffice; no decision record is required.
+- **`open → deferred`** — a conscious decision to revisit later. Requires a **lightweight disposition record** in `decisions/` at the scope: decider, rationale, review trigger, and `decided_at`. `disposition_decision_ref` should point to it. Also requires a `## Log` entry dated today explaining why the risk is being deferred and what the review trigger is. Deferral is reversible only by creating a new risk, not by reopening (see below).
+- **`open → accepted`** — the scope decides to live with the risk. Requires a **full ADR** in `decisions/` at the scope: DACI, rationale, and `decided_at`. `disposition_decision_ref` is **required** and points to the ADR. Also requires a `## Log` entry dated today summarising the acceptance rationale. This transition **requires [`governance-at-scope`](../governance-at-scope/spec.md) OR [`project`](../project/spec.md) active at the scope** — acceptance is a decision-authority act.
+- **`open → mitigated`** — the risk was resolved by a project decision or action. The risk traces to that resolution: `disposition_decision_ref` points to the project decision, ADR, or action record that closed the exposure. Requires a `## Log` entry dated today describing what was done and why the exposure is considered resolved.
+- **`open → closed`** — administrative closure (the risk no longer applies; the context changed; it was a duplicate). A `disposition_at` date suffices for the frontmatter; no decision record is required. Requires a `## Log` entry dated today stating the closure reason (e.g., superseded by, no longer applicable, duplicate of).
 
 **Terminal states do not reopen.** Any move from a terminal state (`mitigated`, `accepted`, `closed`) — or from `deferred` — back to `open` is **not permitted**. Risks don't reopen: if the concern resurfaces, a **new risk** is created with a new `id` and creation date. This keeps each risk record a faithful account of a single concern's life, and keeps RAG age measurement honest (an aged risk cannot be laundered back to GREEN by reopening).
 
@@ -66,7 +94,7 @@ When an owner dispositions a risk — at escalation, at review, or proactively �
 
 > *Confirm with date / defer with reason / reassign*
 
-Every escalation request, and every disposition recorded in `decisions/`, offers these three moves. "Confirm with date" re-affirms the risk and refreshes `disposition_at` (the risk stays `open` but its review clock is acknowledged). "Defer with reason" moves it to `deferred` with a recorded rationale. "Reassign" hands ownership to a different declared person at the scope.
+Every escalation request, and every disposition recorded in `decisions/`, offers these three moves. "Confirm with date" re-affirms the risk and refreshes `disposition_at` (the risk stays `open` but its review clock is acknowledged) **and requires a `## Log` entry dated the same day explaining what was reviewed and why the risk was not deferred or closed** — a date change without a log entry is not a valid confirmation. "Defer with reason" moves it to `deferred` with a recorded rationale. "Reassign" hands ownership to a different declared person at the scope.
 
 ## Where risks live
 

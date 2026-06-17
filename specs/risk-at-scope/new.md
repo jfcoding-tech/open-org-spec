@@ -72,12 +72,24 @@ with YAML frontmatter conforming to the [risk record schema](./spec.md#risk-reco
    - `disposition_decision_ref` — omitted (only set on disposition).
    - `related` — any links offered, else omitted.
 
+   After writing the frontmatter, append the required `## Log` section to the file body:
+
+   ```markdown
+   ## Log
+
+   ### YYYY-MM-DD — <author> — status changed to open
+   Risk created.
+   ```
+
+   where `YYYY-MM-DD` is today's date and `<author>` is the contributor's name (resolved from git config `user.name` or the session identity).
+
    Create the `risks/` folder at the scope if it does not yet exist (sibling of `decisions/`).
 
 5. **Report.** Show the contributor the file created, the id assigned, and the derived `rag`. State the next steps:
    - run [`/adhere-to risk-at-scope`](../adherence-check/spec.md) to verify conformance of the new record;
    - the risk is now `open` and will escalate to the scope's `feedback.md` once it ages past its `escalation_threshold`;
-   - disposition (defer / accept / mitigate / close) follows the [lifecycle](./spec.md#status-lifecycle) — `accepted` will require a full ADR and active governance or project at the scope.
+   - disposition (defer / accept / mitigate / close) follows the [lifecycle](./spec.md#status-lifecycle) — `accepted` will require a full ADR and active governance or project at the scope;
+   - update `disposition_at` and append a `## Log` entry whenever you review, confirm, or change the risk's status.
 
 ## Refusal conditions
 
