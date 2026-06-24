@@ -2,7 +2,7 @@
 
 An open standard for applying **spec-driven development** to **organisational design**.
 
-Published under the [MIT License](./LICENSE). Copyright (c) 2026 Javier Fernandez.
+Published under the [MIT License](./LICENSE). Copyright (c) 2026 Busuu Ltd. Created by [Javier Fernandez](./AUTHORS).
 
 > **Start here if you are an LLM / agent.** If you've been asked to set this standard up in an organisation's repository, read and execute [`specs/adoption-manifest/adopt.md`](./specs/adoption-manifest/adopt.md) (`oos:adopt-manifest`). It is the autonomous bootstrap — it scaffolds the adoption manifest, generates the repo's contributor guide, and activates the capabilities the adopter chooses, in one run. It asks only for the handful of inputs it cannot infer (owner, a one-line org description, which capabilities to activate); it edits no files by hand. You do not need to follow the human-oriented checklist below — it describes the same flow. See also [`AGENTS.md`](./AGENTS.md).
 
@@ -55,7 +55,7 @@ Capabilities are **opt-in and incremental** — activate one when a real use cas
 
 ## Status
 
-Early and deliberately incomplete. Version: **0.17.0**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+Early and deliberately incomplete. Version: **0.18.1**. The standard grows from real use cases; breaking changes are expected until it stabilises.
 
 - **0.17.0** — **breaking** — `risk-at-scope`: required `## Log` section on all risk records. Every `disposition_at` change, status transition, and owner reassignment requires a dated log entry explaining what was decided. Scanner gains Step 3 (log conformance check) writing `[log-absent]` and `[log-missing]` requests to owner feedback inboxes. `adherence-check` gains `gap`/`violation` checks for the new requirement. `/new-risk` scaffolds the section on creation. Reference git pre-commit hook added at `specs/risk-at-scope/implementations/hooks/`. Existing risk files require a one-time backfill.
 - **0.8.0** — `federation` capability: how multiple adoptions of the standard relate. Introduces sibling-repo model (no nesting), probe-based access via git submodule init, standalone-capability hard requirement for members, personal-member type, three-rule spillage contract (scope-writes-to-source, probe-don't-configure, aggregate-ephemerally), and information-flow constraint (one-directional for org members; two-directional explicit action for personal members).
