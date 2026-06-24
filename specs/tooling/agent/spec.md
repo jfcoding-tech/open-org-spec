@@ -151,6 +151,7 @@ Every agent must have a GitHub Actions workflow at `.github/workflows/<agent-nam
 | LLM gateway | `ANTHROPIC_BASE_URL` set to the adopter-declared gateway |
 | Model | `--model <adopter-declared model>` |
 | Permissions flag | `--dangerously-skip-permissions` |
+| System prompt | `--system-prompt "<agent-stub>"` — pass the agent context stub as a CLI flag. Never overwrite `CLAUDE.md` to manage agent context. `CLAUDE.md` is a shared governance artefact; overwriting it corrupts the repo for subsequent runs and human sessions. The `--system-prompt` flag replaces the CLAUDE.md context for the agent session without touching the file. |
 | Frontmatter strip | Strip YAML frontmatter from command files before passing to `claude -p` |
 | Job timeout | `timeout-minutes: 30` |
 
