@@ -76,6 +76,8 @@ Every new capability and every significant behaviour change to an existing capab
 
 The `## Rationale` section is **required** in every proposal. Write it from the motivation, not the mechanism: what problem does this solve, why this approach over alternatives? A proposal without a rationale section is not ready to apply.
 
+When drafting a proposal, check `backlog.md` for any related entries and reference them in `## Related`. A proposal that addresses a backlog entry should note `backlog: <entry-slug>` in its frontmatter so the connection is machine-readable.
+
 See [`proposals/README.md`](./proposals/README.md) for the full lifecycle and promotion checklist.
 
 ---
@@ -92,6 +94,10 @@ When promoting a capability from an adoption's `.open-org-spec/extensions/` into
 6. Move the proposal to `proposals/closed/`.
 7. Use a `feat:` commit unless the promotion includes a breaking change to an existing spec.
 8. Tag a new minor version.
+9. **Update `README.md` — `## Contents`**: add the new capability with its slug and a one-line description.
+10. **Update `README.md` — `## Status`**: add a changelog entry for the new version describing what was added.
+11. **Review `WHY.md`**: if the new capability changes the value proposition or adds a materially new use case, update the relevant section. Not every promotion requires a WHY update — only those that change what the standard is for.
+12. **Update `backlog.md`**: close any backlog entries that this promotion addresses. If the capability is partial, note what remains deferred.
 
 ---
 
