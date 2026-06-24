@@ -35,6 +35,9 @@ Two kinds of repositories use this standard:
   - `observability` — org-health metrics and contributor activity dashboards
   - `adherence-check` — conformance reports against any active capability
   - `federation` — how multiple adoptions relate: sibling repos, probe-based access, spillage contract, ephemeral aggregation
+  - `roles` — role specs with accountabilities, peer interfaces, success criteria, and lifecycle
+  - `teams` — teams as first-class artefacts within scopes, with dotted-line encoding and working-group lifecycle
+  - `working-agreement` — bilateral contracts between two scopes formalising what each owes the other
 - [`templates/`](./templates/) — copy-paste starters for artefacts defined by the capabilities in [`specs/`](./specs/).
 - [`WHY.md`](./WHY.md) — why an organisation would adopt this: the problem, the pattern, and what it looks like in practice.
 - [`GUIDE.md`](./GUIDE.md) — how to use the standard in an organisation.
@@ -55,8 +58,9 @@ Capabilities are **opt-in and incremental** — activate one when a real use cas
 
 ## Status
 
-Early and deliberately incomplete. Version: **0.18.2**. The standard grows from real use cases; breaking changes are expected until it stabilises.
+Early and deliberately incomplete. Version: **0.19.0**. The standard grows from real use cases; breaking changes are expected until it stabilises.
 
+- **0.19.0** — three new capabilities: `roles` (role specs with accountabilities, peer interfaces, success criteria, and lifecycle — including owner vs incumbent distinction and incumbent-acceptance gate); `teams` (teams as first-class artefacts within scopes, dotted-line relationships as a team property rather than person files, working-group lifecycle with required close criterion); `working-agreement` (bilateral contracts between two scopes, double-dash naming convention, acknowledgement mechanism, catalogue integration for review-date alerting).
 - **0.17.0** — **breaking** — `risk-at-scope`: required `## Log` section on all risk records. Every `disposition_at` change, status transition, and owner reassignment requires a dated log entry explaining what was decided. Scanner gains Step 3 (log conformance check) writing `[log-absent]` and `[log-missing]` requests to owner feedback inboxes. `adherence-check` gains `gap`/`violation` checks for the new requirement. `/new-risk` scaffolds the section on creation. Reference git pre-commit hook added at `specs/risk-at-scope/implementations/hooks/`. Existing risk files require a one-time backfill.
 - **0.8.0** — `federation` capability: how multiple adoptions of the standard relate. Introduces sibling-repo model (no nesting), probe-based access via git submodule init, standalone-capability hard requirement for members, personal-member type, three-rule spillage contract (scope-writes-to-source, probe-don't-configure, aggregate-ephemerally), and information-flow constraint (one-directional for org members; two-directional explicit action for personal members).
 - **0.2.0** — **breaking** — agent restructuring and naming. Dropped the `-agent` suffix everywhere (agents are named for what they do). `catalogue` extracted from spec-health to a standalone tooling capability (`specs/tooling/catalogue/`) emitting a split catalogue: `index.yaml` discovery manifest + per-type sub-files (`specs.yaml`, `decisions.yaml`, `feedback-inboxes.yaml`, `projects.yaml`). `decision-nudge` → `decision-escalation`, moved to `specs/governance-at-scope/tools/` and generalised to route a disposition request (confirm/defer/reassign). The observability agent → `agent-metrics` (`specs/tooling/agent-metrics/`), now measuring all agents and commands, not just spec-health. Spec-health suite reduced to `conformance` + `catalogue` (the latter a referenced standalone capability). Observability capability tools renamed: `owner-load`→`owner-health`, `inbox-load`→`inbox-health`, `decision-flow`→`decision-health`, `spec-touch`→`spec-activity`. Delta-mode optimisation pattern defined in `tooling/spec.md`.
