@@ -6,19 +6,21 @@
 
 ## The problem is not documentation
 
-Most organisations have more documentation than anyone can read. Confluence pages, slide decks, recorded meetings, email threads with thirty-six messages and no clear owner.
+Most organisations have more documentation than anyone can read. Confluence pages, slide decks, recorded meetings, email threads with no clear owner.
 
-That is not the problem. The problem is **legibility** — the difference between information that exists somewhere and information that is findable, current, relevant, and actionable by the right person at the right time.
+That is not the problem. The problem is **observability** — the difference between information that exists somewhere and information that is findable, current, relevant, and actionable by the right person at the right time.
 
-An unlegible organisation runs on knowledge that lives in people's heads. Decisions get made in meetings and evaporate. A new joiner can't understand how the org works without scheduling a week of calls. The same cross-functional disagreement happens three times because nobody can find the resolution from the first two. When something breaks, the person who gets called isn't the one who was involved — it's the one who happens to remember.
+Complexity must go somewhere. In most organisations, it goes into people's heads — where it is invisible, unqueryable, and dies when they leave. Hold complexity in people, and it evaporates when they leave. Hold it in systems, and it compounds as the organisation grows.
+
+An unobservable organisation runs on knowledge that lives in people's heads. Decisions get made in meetings and evaporate. A new joiner can't understand how the org works without scheduling a week of calls. The same cross-functional disagreement happens three times because nobody can find the resolution from the first two. When something breaks, the person who gets called isn't the one who was involved — it's the one who happens to remember.
 
 This is not a people problem. It is a design problem. The knowledge that governs the organisation is invisible. It cannot be queried. It cannot be challenged. It cannot survive the people who carry it.
 
 ---
 
-## What legibility is
+## What observability is
 
-A legible organisation has written itself down. Not exhaustively — that's the documentation trap. Precisely: the things that actually govern how work gets done.
+An observable organisation has written itself down. Not exhaustively — that's the documentation trap. Precisely: the things that actually govern how work gets done.
 
 Who owns this decision. What scope it covers. What was ruled out and why. Where the boundary is between this team and the next. What the current priorities are and what they're connected to.
 
@@ -108,13 +110,15 @@ When Jamie moves on, the next person doesn't start from scratch.
 
 ## Why AI makes this urgent
 
+AI does not solve the observability problem. AI makes it existential.
+
 Everything above was possible before AI. What has changed is the economics — and the stakes.
 
-AI operates on context. When the context is in the system — decisions recorded, owners declared, scopes defined — AI can run an analysis in twenty minutes that used to take a day. The cross-project risk analysis becomes a query, not a synthesis.
+AI is an accelerant, not a corrector. It operates on context. When the context is in the system — decisions recorded, owners declared, scopes defined — AI can run an analysis in twenty minutes that used to take a day. The cross-project risk analysis becomes a query, not a synthesis.
 
-But the inverse is also true. Without a legible organisation, AI generates volume without intelligence. More output. Faster delivery. In whatever direction you were already pointing. The feedback loop that would have slowed you down — the friction, the rework, the visible failure — gets suppressed. By the time the impact surfaces, you are much further in the wrong direction.
+But the inverse is also true. Without an observable organisation, AI generates volume without intelligence. More output. Faster delivery. In whatever direction you were already pointing. The feedback loop that would have slowed you down — the friction, the rework, the visible failure — gets suppressed. By the time the impact surfaces, you are much further in the wrong direction.
 
-The legible organisation is the synthesis layer. The spec is what gives AI enough to work with. Without it, AI doesn't make the organisation smarter. It makes it louder.
+The observable organisation is the synthesis layer. The spec is what gives AI enough to work with. Without it, AI doesn't make the organisation smarter. It makes it louder.
 
 ---
 
@@ -132,7 +136,7 @@ The open-org-spec capabilities are those foundational elements. Not a framework 
 
 Find the decision that is governing your organisation but has never been written down. Write it down. Give it an owner. Make it findable.
 
-That is the first unit of legibility. Everything compounds from there.
+That is the first unit of observability. Everything compounds from there.
 
 → [`GUIDE.md`](./GUIDE.md) for how to get started.
 → [`README.md`](./README.md) for the technical overview.

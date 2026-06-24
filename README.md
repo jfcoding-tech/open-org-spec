@@ -8,7 +8,7 @@ Published under the [MIT License](./LICENSE). Copyright (c) 2026 Busuu Ltd. Crea
 
 ## Purpose
 
-Organisations are systems. Like software systems, they benefit from being described explicitly — with intent, constraints, ownership, and conventions written down — rather than implicitly understood.
+Organisations are systems. Like software systems, they benefit from being described explicitly — with intent, constraints, ownership, and conventions written down — rather than implicitly understood. An organisation that has written itself down this way becomes **observable**: its decisions findable, its ownership named, its complexity queryable rather than locked in people's heads.
 
 `open-org-spec` is a **meta-spec**: a standard that defines *how* an organisation describes itself. It does not prescribe what any particular organisation should look like. Each organisation authors its own specs (in its own repository) conformant with the standard, and adapts the conventions to its own context.
 
