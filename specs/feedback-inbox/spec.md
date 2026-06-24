@@ -90,6 +90,33 @@ implication. Tools that scan inboxes must handle both tagged and untagged entrie
 
 When a feedback entry proposes adding a person to a `people.md` in a role, or assigning a responsibility to a named person, the entry itself is not the consent mechanism. The entry opens the conversation; the named person's inline response closes it. See the [`people`](../people/spec.md) capability for the consent and acknowledgement rule for `people.md` additions specifically.
 
+## Tools
+
+### `/my-pending-feedback` — surface open entries for the current contributor
+
+**Purpose.** Show a contributor all feedback entries currently addressed to them across every inbox registered in the catalogue. Replaces manual scanning of multiple files.
+
+**Inputs.**
+1. The catalogue's `feedback_inboxes` list — the authoritative index of every active inbox path and its `primary_addressee`. Path declared in the adopter's catalogue extension.
+2. The feedback files identified for this contributor.
+
+**Contributor resolution.** Run `git config user.name`. If no catalogue entry matches, fall back to `git config user.email`. If no match is found, tell the contributor and suggest they check whether their inbox path is registered in the catalogue.
+
+**Open entry detection.** Apply the addressee detection rules in § Addressee detection for tools. An entry is open when it is addressed to the contributor AND is not prefixed `[resolved]` AND contains no inline response blockquote from the contributor closing it.
+
+**Output.** Present open entries grouped by urgency:
+- Accept-blockers or entries with an explicit deadline — first
+- Entries needing a response or action — second
+- Conformance / housekeeping — last
+
+For each entry: date and author, title, what is being asked (one line), suggested next step.
+
+Close with a count: `N open entries — M need a response, K need an action in the repo.`
+
+**Interactive mode.** After the summary, offer to work through entries one at a time: show full entry, propose a response or repo action, wait for the contributor's input, advance only when the entry is closed or explicitly skipped.
+
+**Model guidance.** Haiku is sufficient — scan-and-summarise with no structural judgment required.
+
 ## What is not prescribed
 
 - **Whether every scope has a feedback file.** Absence is valid. Small scopes with a single active contributor may route feedback directly rather than through a file.
