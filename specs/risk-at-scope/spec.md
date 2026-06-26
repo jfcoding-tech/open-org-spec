@@ -26,6 +26,7 @@ A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` f
 | `id` | Yes | Sequential identifier `R-NNN`. Declared by the author; suggested by [`/new-risk`](./new.md) from the risk registry. Unique within the registry's aggregation scope. |
 | `title` | Yes | Short label for the risk. |
 | `description` | Yes | Free-text statement of the risk: what could go wrong and why it matters. |
+| `created_at` | Yes | ISO date (`YYYY-MM-DD`) on which the risk was first raised. Must match the date prefix in the filename. Canonical source for RAG age derivation — immune to filename changes. Set once at creation; never changed. |
 | `rag` | Derived | `RED \| AMBER \| GREEN`. **Derived from objective criteria** (see [RAG derivation](#rag-derivation)), never manually declared. The author records the derived value; tools recompute it. |
 | `owner` | Yes | Named person(s) accountable for dispositioning the risk, declared at this scope (present in the scope's `people.md` or DACI). May be multiple. |
 | `status` | Yes | `open \| deferred \| mitigated \| accepted \| closed`. See [Status lifecycle](#status-lifecycle). |
@@ -67,7 +68,7 @@ Risk created.
 
 ## RAG derivation
 
-`rag` is **derived, never manually declared.** It is a function of `status`, the days elapsed since the risk's creation date (the date in the filename), and the `escalation_threshold`. Let `age` be the number of days since creation:
+`rag` is **derived, never manually declared.** It is a function of `status`, the days elapsed since `created_at`, and the `escalation_threshold`. Let `age` be the number of days since `created_at`:
 
 - **GREEN** — `status` is not `open` (any terminal or deferred state is, by definition, no longer a live red flag), OR `status: open` with `age < 50%` of `escalation_threshold`.
 - **AMBER** — `status: open` with `age` between `50%` and `100%` of `escalation_threshold` (i.e. `0.5 × threshold ≤ age < threshold`).
