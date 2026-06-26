@@ -107,6 +107,63 @@ Only generic, reusable content that applies across organisations. If you are uns
 
 ---
 
+## Development setup
+
+### Fork and clone
+
+1. Fork `Busuu/open-org-spec` on GitHub to your own account.
+2. Clone your fork:
+   ```bash
+   git clone git@github.com:<your-handle>:open-org-spec.git
+   cd open-org-spec
+   ```
+3. Add Busuu as upstream:
+   ```bash
+   git remote add upstream git@github.com:Busuu/open-org-spec.git
+   ```
+
+### Multiple GitHub accounts (SSH)
+
+If you use separate SSH keys for different GitHub accounts, add host aliases to `~/.ssh/config`:
+
+```
+Host github.com-work
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_rsa_work
+  IdentitiesOnly yes
+
+Host github.com-personal
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_rsa_personal
+  IdentitiesOnly yes
+```
+
+Then use the alias in your remote URLs:
+
+```bash
+git remote set-url origin git@github.com-personal:<your-handle>/open-org-spec.git
+git remote set-url upstream git@github.com-work:Busuu/open-org-spec.git
+```
+
+Set a per-clone identity so commits carry the right author:
+
+```bash
+git config user.name "Your Name"
+git config user.email "you@example.com"
+```
+
+### PR flow
+
+1. Create a branch on your fork: `git checkout -b my-feature`
+2. Commit following the [commit conventions](#commit-conventions) above.
+3. Push to your fork: `git push origin my-feature`
+4. Open a PR from `<your-handle>/open-org-spec:my-feature` → `Busuu/open-org-spec:main`.
+5. Keep your fork's `main` in sync: `git fetch upstream && git merge upstream/main`.
+
+---
+
 ## Related
 
 - [`AGENTS.md`](./AGENTS.md) — entry point for LLM agents adopting the standard (not for contributors)
