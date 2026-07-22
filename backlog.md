@@ -20,6 +20,25 @@ Not a task list. Not a prioritised roadmap. When an entry's trigger fires, it gr
 
 ## Open
 
+### Prototype interactive commands: read-only default, no command-directory wiring until graduation
+
+**Added:** 2026-07-22 by Javier Fernandez
+
+**Rationale.** Contract 1 Case A of the `agent` capability ([`specs/tooling/agent/spec.md`](./specs/tooling/agent/spec.md)) governs prototype *agents* — scheduled, unattended processes running with `--dangerously-skip-permissions` — with a project spec, a declared write scope, and a security contract. It says nothing about prototype *interactive commands*: human-invoked tools being validated before graduation. Two questions Contract 1 doesn't answer for this case: (1) should a prototype command be wired into the adopter's command directory (`.claude/commands/` or equivalent) the way a graduated capability's command is, or does that risk contributors discovering and depending on unvalidated behaviour before the close criterion is met? (2) what write scope should a prototype command default to — Contract 2's write-scope-validator pattern assumes some declared write scope, but a prototype whose only purpose is to answer questions about existing content (a query/read tool) arguably needs none at all, and the default should be explicit read-only rather than relying on an adopter to remember to narrow it.
+
+**Trigger (OR'd — first fires).**
+- A second prototype interactive command is built and the same two questions recur, making it worth a shared answer instead of an ad hoc one per prototype.
+- A prototype command gets wired into a command directory during validation and a contributor starts depending on it before it graduates, causing real disruption when its behaviour changes or it's abandoned.
+- The `catalogue-edges` prototype (validating a relationship-graph query against `catalogue`) reaches its close criterion and the promotion has to decide, for the first time, how the prototype-command phase should have been governed.
+
+**Context.**
+- Surfaced 2026-07-22 while scoping a prototype project to validate a graph-relationship query command (extending `catalogue` with typed edges derived from `## Related`/`## Dependencies` sections). The prototype is deliberately read-only and deliberately not wired to a command directory during validation, but nothing in `tooling/agent/spec.md` states that as a rule — it was an ad hoc judgment call for this instance.
+- Contract 1 Case A already distinguishes prototype vs. graduated agents for scheduled/unattended tools; this entry is about the parallel distinction for interactive, human-invoked tools, which Contract 1's fields (write scope declaration, security layers) weren't written with in mind.
+
+**If adopted.** Graduates as a short addition to Contract 1 (or a new Contract 1b) in `specs/tooling/agent/spec.md`, or a section in `specs/tooling/spec.md` if it turns out to be a `tooling`-capability-wide concern rather than specific to `agent`: a prototype interactive command defaults to no declared write scope (read-only) unless the project spec explicitly declares one, and is invoked directly (ad hoc prompt or a script under the project folder) rather than wired into the adopter's command directory until it graduates.
+
+---
+
 ### B-004: Risk registry daily delta implementation
 
 **Added:** 2026-06-06 by Javier Fernandez
