@@ -153,6 +153,36 @@ scheduled agent). Close criterion: the benchmark comparison in
 `projects/catalogue-edges/benchmark/results.md` is complete for every
 question in `questions.yaml`, with a written recommendation (promote /
 iterate / abandon).
+
+## Success metrics
+
+Distinct from the close criterion (did the comparison run to completion) —
+these decide *what* the recommendation should be. Each question runs N=3
+times per arm; judge against the median, not a single favourable run.
+
+1. **Correctness floor (must-pass).** Graph-backed recall = 100% and
+   precision ≥ baseline's on every `VERIFIED`-ground-truth question.
+   `stale-01` specifically: graph-backed must catch both dead links in
+   `roles/spec.md`. Failing this means nothing else below matters.
+2. **The discriminating criterion.** On `transitive-01`, the graph-backed
+   approach must succeed where the baseline either fails outright or needs
+   materially more tool calls/turns for the same answer. This is the
+   proposal's actual thesis (multi-hop reasoning, not single-hop lookup) —
+   if the baseline performs comparably here too, the premise is weaker than
+   argued regardless of how the easier questions score.
+3. **Efficiency bar (supporting, not sufficient alone).** On the single-hop
+   questions (`reverse-01`, `typed-01`, `gap-01`), graph-backed `tool_calls`
+   and `tokens` are lower than baseline by ≥40% — a marginal win doesn't
+   justify the maintenance cost this proposal's own Rationale argues
+   against incurring prematurely.
+4. **Precision bar.** On `precision-01`, baseline's naive-grep precision is
+   ~28% (7 real edges out of ~25 string hits). Graph-backed should approach
+   100%, since it only reports declared `## Related` edges.
+
+**Decision rule.** Promote only if 1 and 2 both hold; 3 and 4 are supporting
+evidence, not sufficient alone. If 2 fails while 1/3/4 hold, that is
+"iterate" (a cheaper single-hop-only version might still be worth it), not
+"promote" as currently scoped.
 ```
 
 ### Benchmark question schema
