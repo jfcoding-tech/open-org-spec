@@ -463,6 +463,23 @@ prototype's own hypothesis may be refuted. The standard author (Javier
 Fernandez) decides whether to proceed to a `feat:` promotion, iterate the
 prototype, or abandon it, based on the completed benchmark comparison.
 
+## Next steps (post-validation)
+
+Actions depend on the recommendation Step 6 of the guided run produces.
+
+**If promote:**
+
+1. Extend [`specs/tooling/catalogue/spec.md`](../specs/tooling/catalogue/spec.md) with the `edges.yaml` handler and write the companion query tool spec, in this repo.
+2. If Contract 4's invocation-log format gains a `graph_assisted` field, commit as `feat!:` (breaking change to a shared contract per `CONTRIBUTING.md`), not `feat:`.
+3. Run the standard promotion checklist from `CONTRIBUTING.md`: copy `## Rationale` verbatim into the new spec; move this proposal to `proposals/closed/`; update `README.md` (`## Contents`, `## Status`); review `WHY.md`; close or update the "Prototype interactive commands" `backlog.md` entry, whose own trigger condition fires here.
+4. Tag a new minor version per `CONTRIBUTING.md`'s versioning table.
+5. If contributing upstream, open a PR from this fork to `Busuu/open-org-spec:main` via the documented fork PR flow; otherwise merge to this fork's own `main`.
+6. In the adopter repo: discard `test/catalogue-edges`, or open a draft PR there first if the benchmark run should be kept as a record before deleting the branch.
+
+**If iterate.** No spec change. Revise the prototype per what the benchmark exposed (e.g. narrow to single-hop only if the transitive criterion failed), re-run a narrower benchmark on the same adopter branch, and update this proposal's Rationale/Hypothesis to reflect the revised scope. Status stays `proposed`.
+
+**If abandon.** Move this proposal to `proposals/closed/` anyway, with the benchmark results appended as the rationale for not proceeding, rather than deleting it — consistent with this repo's practice of keeping the "why we didn't" on record. Note in the "Prototype interactive commands" `backlog.md` entry that its trigger fired but resolved as abandon, in case that changes what the eventual governance guideline should say.
+
 ## Related
 
 - [`../specs/tooling/catalogue/spec.md`](../specs/tooling/catalogue/spec.md) — the capability this would extend; the handler-registration pattern this proposal reuses.
