@@ -196,7 +196,7 @@ This check only runs when `risk-at-scope` is declared `active` in the adoption m
 
 - **Risk record required fields.** For each `risks/YYYY-MM-DD-*.md` found: validate `id`, `title`, `description`, `owner`, `status`, `escalation_threshold`, `disposition_at`. Missing fields emit a `gap`.
 - **`id` format valid.** Must match `R-[0-9]+`. Invalid format emits a `violation`.
-- **`status` valid vocabulary.** Must be `open | deferred | mitigated | accepted | closed`. Other values emit a `violation`.
+- **`status` valid vocabulary.** Must be `open | monitoring | deferred | mitigated | accepted | closed`. Other values emit a `violation`.
 - **`disposition_decision_ref` present for `accepted`.** A risk with `status: accepted` must have `disposition_decision_ref` pointing to an existing decision record. Missing or broken ref emits a `violation` — formal acceptance without a decision record is a governance failure.
 - **`disposition_decision_ref` recommended for `deferred`.** A risk with `status: deferred` without `disposition_decision_ref` emits a `warning` — deferral without a rationale record is a weak governance signal.
 - **`## Log` section present.** For each risk file with `status` not in `(closed, resolved)`: check that the file body contains a `## Log` section. Absent emits a `gap` — active risks without a log section are non-conformant.

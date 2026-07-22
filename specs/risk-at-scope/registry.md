@@ -31,14 +31,14 @@ Walk all `risks/YYYY-MM-DD-*.md` files in:
 
 Exclusions: `projects/closed/` (closed projects are guaranteed to have only terminal-state risks).
 
-For delta runs: walk only the files identified in Step 1 plus any file whose `id` appears in the existing registry with `status: open` (open risks must be re-evaluated even if the file didn't change, because `rag` is derived from current date vs `escalation_threshold`).
+For delta runs: walk only the files identified in Step 1 plus any file whose `id` appears in the existing registry with `status: open` or `status: monitoring` (these risks must be re-evaluated even if the file did not change, because `rag` is derived from the current date vs `escalation_threshold` or `disposition_at`).
 
 ### Step 3 — Extract and derive fields
 
 For each risk file, extract:
 - `id` — the `R-NNN` identifier
 - `title` — short label
-- `status` — `open | deferred | mitigated | accepted | closed`
+- `status` — `open | monitoring | deferred | mitigated | accepted | closed`
 - `owner` — named person(s)
 - `escalation_threshold` — days
 - `disposition_at` — date of last disposition (ISO)
@@ -46,10 +46,10 @@ For each risk file, extract:
 - `scope` — inferred from file path (e.g. `projects/agentic-coach-phase-3`)
 
 Derive:
-- `rag` — computed from `status`, filename date, and `escalation_threshold`:
-  - `GREEN` if status is terminal OR age < 50% of threshold
-  - `AMBER` if age between 50% and 100% of threshold
-  - `RED` if age ≥ threshold OR status is `open` with no `disposition_at` in last 14 days
+- `rag` — computed from `status`, filename date, `disposition_at`, and `escalation_threshold`:
+  - `GREEN` if status is terminal (`mitigated | accepted | closed`) or `deferred`, OR `status: open` with age < 50% of threshold, OR `status: monitoring` with days since `disposition_at` < 50% of threshold
+  - `AMBER` if (`status: open` OR `status: monitoring`) with staleness between 50% and 100% of threshold. For `open`, staleness = age (days since filename date). For `monitoring`, staleness = days since `disposition_at`.
+  - `RED` if staleness ≥ threshold OR `status: open` with no `disposition_at` in last 14 days
 
 ### Step 4 — Update registry
 
@@ -62,6 +62,8 @@ tool: risk-registry
 period_days: 1
 key_metrics:
   open_risks: N
+  monitoring_risks: N
+  deferred_risks: N
   red_risks: N
   amber_risks: N
   unowned_risks: N

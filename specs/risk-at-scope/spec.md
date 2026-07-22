@@ -29,7 +29,7 @@ A risk is a markdown file named `YYYY-MM-DD-slug.md`, living inside a `risks/` f
 | `created_at` | Yes | ISO date (`YYYY-MM-DD`) on which the risk was first raised. Must match the date prefix in the filename. Canonical source for RAG age derivation — immune to filename changes. Set once at creation; never changed. |
 | `rag` | Derived | `RED \| AMBER \| GREEN`. **Derived from objective criteria** (see [RAG derivation](#rag-derivation)), never manually declared. The author records the derived value; tools recompute it. |
 | `owner` | Yes | Named person(s) accountable for dispositioning the risk, declared at this scope (present in the scope's `people.md` or DACI). May be multiple. |
-| `status` | Yes | `open \| deferred \| mitigated \| accepted \| closed`. See [Status lifecycle](#status-lifecycle). |
+| `status` | Yes | `open \| monitoring \| deferred \| mitigated \| accepted \| closed`. See [Status lifecycle](#status-lifecycle). |
 | `escalation_threshold` | Yes | Integer days of inactivity (since creation, while `open`) before the risk escalates. Drives RAG derivation and the [escalation contract](#escalation-contract). |
 | `disposition_at` | When dispositioned | ISO date (`YYYY-MM-DD`) of the last disposition action. Set whenever `status` changes or the risk is explicitly re-affirmed. |
 | `disposition_decision_ref` | When `accepted` (required); when `deferred` / `mitigated` (recommended) | Relative link to the decision record that dispositioned the risk. Required when `status: accepted` (points to the ADR). Recommended when `status: deferred` (points to the lightweight disposition record) and `status: mitigated` (points to the project decision or action that resolved it). |
@@ -70,15 +70,17 @@ Risk created.
 
 `rag` is **derived, never manually declared.** It is a function of `status`, the days elapsed since `created_at`, and the `escalation_threshold`. Let `age` be the number of days since `created_at`:
 
-- **GREEN** — `status` is not `open` (any terminal or deferred state is, by definition, no longer a live red flag), OR `status: open` with `age < 50%` of `escalation_threshold`.
-- **AMBER** — `status: open` with `age` between `50%` and `100%` of `escalation_threshold` (i.e. `0.5 × threshold ≤ age < threshold`).
-- **RED** — `status: open` with `age ≥ escalation_threshold`, OR escalation has been explicitly requested (a contributor or owner can force RED ahead of the threshold).
+- **GREEN** — `status` is terminal (`mitigated | accepted | closed`) or `deferred`, OR `status: open` with `age < 50%` of `escalation_threshold`, OR `status: monitoring` with days since `disposition_at` < 50% of `escalation_threshold`.
+- **AMBER** — (`status: open` OR `status: monitoring`) with staleness between `50%` and `100%` of `escalation_threshold`. For `open`, staleness = days since `created_at`. For `monitoring`, staleness = days since `disposition_at`.
+- **RED** — staleness ≥ `escalation_threshold`, OR escalation has been explicitly requested (a contributor or owner can force RED ahead of the threshold).
 
 Because the value is derived, the `rag` field recorded in a file is a cached snapshot. Tools that read risks recompute it from `status`, the filename date, and `escalation_threshold`; a stale cached value is a `warning`, not a contradiction. The risk scanner is responsible for keeping cached values current.
 
 ## Status lifecycle
 
 A risk opens at `open` and moves to exactly one terminal disposition. The transition gates:
+
+- **`open → monitoring`** — the risk has been acknowledged and is under active observation. The owner is tracking it and expects the exposure to resolve through work already in progress. Unlike `deferred`, `monitoring` is not a decision to revisit later — it is active, ongoing attention. Requires setting `disposition_at` to today and a `## Log` entry explaining what is being watched and why a terminal disposition is not yet appropriate. `monitoring` is reversible: a risk may return to `open` if the active watching lapses or the in-progress work stalls (this is the only non-terminal status that may revert to `open` — a new risk is not required).
 
 - **`open → deferred`** — a conscious decision to revisit later. Requires a **lightweight disposition record** in `decisions/` at the scope: decider, rationale, review trigger, and `decided_at`. `disposition_decision_ref` should point to it. Also requires a `## Log` entry dated today explaining why the risk is being deferred and what the review trigger is. Deferral is reversible only by creating a new risk, not by reopening (see below).
 - **`open → accepted`** — the scope decides to live with the risk. Requires a **full ADR** in `decisions/` at the scope: DACI, rationale, and `decided_at`. `disposition_decision_ref` is **required** and points to the ADR. Also requires a `## Log` entry dated today summarising the acceptance rationale. This transition **requires [`governance-at-scope`](../governance-at-scope/spec.md) OR [`project`](../project/spec.md) active at the scope** — acceptance is a decision-authority act.

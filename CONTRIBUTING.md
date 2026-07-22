@@ -61,9 +61,12 @@ Versions follow `0.<minor>.<patch>` until the standard stabilises.
 | Bug fix or non-breaking addition | Patch (`0.x.y`) |
 | Documentation only | Patch (`0.x.y`) |
 
-After committing, tag the release:
+After committing, update the `VERSION` file, tag the release, and push both:
 
 ```bash
+echo "v<version>" > VERSION
+git add VERSION
+git commit -m "chore: tag v<version>"
 git tag v<version>
 git push origin main v<version>
 ```
